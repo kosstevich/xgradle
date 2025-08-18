@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package buildtest;
+package buildtests;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author Ivan Khanas
  */
-public class IntegrationTests {
+public class E2ETests {
 
     private File pluginJar;
 
@@ -49,7 +49,7 @@ public class IntegrationTests {
      */
     @BeforeEach
     public void preparePluginJar() {
-        pluginJar = new File("build/libs/xgradle.jar");
+        pluginJar = new File("build/dist/xgradle.jar");
         if (!pluginJar.exists()) {
             throw new IllegalStateException("Could not find plugin jar: " + pluginJar.getAbsolutePath());
         }
