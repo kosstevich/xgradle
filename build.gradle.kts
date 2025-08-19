@@ -12,6 +12,11 @@ repositories {
     mavenCentral()
 }
 
+java {
+    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_11
+}
+
 dependencies {
     implementation(gradleApi())
     testImplementation(gradleTestKit())
