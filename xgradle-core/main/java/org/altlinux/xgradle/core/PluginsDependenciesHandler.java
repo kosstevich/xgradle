@@ -15,9 +15,9 @@
  */
 package org.altlinux.xgradle.core;
 
-import org.altlinux.xgradle.core.managers.RepositoryManager;
+import org.altlinux.xgradle.core.managers.PluginManager;
+
 import org.altlinux.xgradle.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.model.MavenCoordinate;
 import org.altlinux.xgradle.services.VersionScanner;
 import org.altlinux.xgradle.services.*;
 
@@ -25,82 +25,68 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 
-import java.io.File;
-
-import static org.altlinux.xgradle.utils.Painter.green;
-
 /**
- * Handles plugin dependencies by adding local flat directory repositories
- * and configuring plugin resolution strategy based on found plugin artifacts.
+ * Central handler for managing plugin dependencies in Gradle builds.
  *
- * <p>This class scans the configured system jars directory, adds it as a flatDir repository,
- * and intercepts plugin resolution requests to provide specific plugin versions
- * based on local Maven coordinates discovered via a VersionScanner.</p>
+ * <p>This class serves as the main entry point for configuring plugin dependency resolution
+ * using locally available artifacts. It orchestrates the process of:</p>
+ * <ul>
+ *   <li>Scanning configured system directories for available plugin artifacts</li>
+ *   <li>Adding local directories as flat repository sources for plugin resolution</li>
+ *   <li>Intercepting plugin resolution requests to provide specific versions from local artifacts</li>
+ *   <li>Handling both regular plugins and BOM (Bill of Materials) based plugin packages</li>
+ * </ul>
+ *
+ * <p>The handler uses a {@link PluginManager} to delegate the actual plugin management operations,
+ * providing a clean separation of concerns while ensuring consistent plugin resolution behavior
+ * across all projects in the build.</p>
+ *
+ * <p><strong>Note:</strong> This handler specifically focuses on Gradle plugins and should not
+ * be confused with regular project dependency management.</p>
+ *
+ * @see PluginManager
+ * @see VersionScanner
+ * @see SystemDepsExtension#getJarsPath()
  *
  * @author Ivan Khanas
  */
 public class PluginsDependenciesHandler {
     private static final Logger logger = Logging.getLogger(PluginsDependenciesHandler.class);
-    private final RepositoryManager pluginsRepository;
-    private final VersionScanner versionScanner;
+    private final PluginManager pluginManager;
 
     /**
-     * Constructs a PluginsDependenciesHandler with default components:
-     * - a VersionScanner that uses PomFinder with DefaultPomParser
-     * - a FileSystemArtifactVerifier
+     * Constructs a new PluginsDependenciesHandler with default service implementations.
+     *
+     * <p>Initializes the handler with:
+     * <ul>
+     *   <li>A {@link VersionScanner} configured with {@link PomFinder} and {@link FileSystemArtifactVerifier}</li>
+     *   <li>A {@link PluginManager} to handle plugin resolution operations</li>
+     * </ul>
+     * </p>
      */
     public PluginsDependenciesHandler() {
-        this.pluginsRepository = new RepositoryManager(logger);
-        this.versionScanner = new VersionScanner(
-                new PomFinder(new DefaultPomParser()),
-                new FileSystemArtifactVerifier()
-        );
+        PomFinder pomFinder = new PomFinder(new DefaultPomParser());
+        VersionScanner versionScanner = new VersionScanner(pomFinder, new FileSystemArtifactVerifier());
+        this.pluginManager = new PluginManager(versionScanner, pomFinder, logger);
     }
 
     /**
-     * Initializes the plugin dependencies handling process.
-     * <ul>
-     *   <li>Checks the system jars directory availability.</li>
-     *   <li>Adds the directory and its subdirectories as a flatDir repository to plugin management.</li>
-     *   <li>Sets up a plugin resolution strategy to resolve plugins from local artifacts.</li>
-     * </ul>
+     * Initializes and configures plugin dependency resolution for the given Gradle settings.
      *
-     * @param settings Gradle Settings object for configuration
+     * <p>This method:
+     * <ol>
+     *   <li>Validates the existence of the system jars directory</li>
+     *   <li>Adds the directory and its subdirectories as flatDir repositories to plugin management</li>
+     *   <li>Configures a plugin resolution strategy to resolve plugins from local artifacts</li>
+     *   <li>Handles both regular plugins and BOM-based plugin packages</li>
+     * </ol>
+     *
+     * <p>If the system jars directory does not exist or is not accessible, a warning is logged
+     * but the build continues with standard plugin resolution mechanisms.</p>
+     *
+     * @param settings the Gradle Settings object used to configure plugin management
      */
     public void handle(Settings settings) {
-        File baseDir = new File(SystemDepsExtension.getJarsPath());
-        if (!baseDir.exists() || !baseDir.isDirectory()) {
-            logger.warn("System jars directory unavailable: {}", baseDir.getAbsolutePath());
-            return;
-        }
-        pluginsRepository.configurePluginsRepository(settings, baseDir);
-        configurePluginResolution(settings);
-    }
-
-    /**
-     * Configures the plugin resolution strategy in the given settings.
-     * Resolves plugin requests by looking up the plugin artifact in the local repository.
-     * Core Gradle plugins and plugins without group identifiers are skipped.
-     *
-     * @param settings Gradle Settings object
-     */
-    private void configurePluginResolution(Settings settings) {
-        settings.getPluginManagement().getResolutionStrategy().eachPlugin(requested -> {
-            String pluginId = requested.getRequested().getId().getId();
-            if (pluginId.startsWith("org.gradle.") || !pluginId.contains(".")) {
-                logger.lifecycle("Skipping core plugin: {}", pluginId);
-                return;
-            }
-
-            MavenCoordinate coord = versionScanner.findPluginArtifact(pluginId, logger);
-            if (coord != null && coord.isValid()) {
-                String module = coord.getGroupId() + ":" + coord.getArtifactId() + ":" + coord.getVersion();
-                requested.useModule(module);
-                requested.useVersion(coord.getVersion());
-                logger.lifecycle(green("Resolved plugin: {} -> {}"), pluginId, module);
-            } else {
-                logger.warn("Plugin not resolved: {}", pluginId);
-            }
-        });
+        pluginManager.handle(settings);
     }
 }
