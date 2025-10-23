@@ -1,0 +1,52 @@
+From: Ivan Khanas <xeno@altlinux.org>
+Date: Fri, 22 Aug 2025 21:31:47 +0300
+Subject: [PATCH 1/2] Disable checkstyle plugin alt patch
+
+We don't need checkstyle check in distribution build.
+---
+ build.gradle | 22 ----------------------
+ 1 file changed, 22 deletions(-)
+
+diff --git a/build.gradle b/build.gradle
+index f2a195f..fe0dde3 100644
+--- a/build.gradle
++++ b/build.gradle
+@@ -7,7 +7,6 @@ group = "org.hamcrest"
+ version = "3.0"
+ 
+ subprojects {
+-    apply plugin: 'checkstyle'
+     apply plugin: 'java-library'
+ 
+     group = rootProject.group
+@@ -22,27 +21,6 @@ subprojects {
+         mavenCentral()
+     }
+ 
+-    checkstyle {
+-
+-        project.ext.checkstyleVersion = '9.3'
+-            //works with a JDK 7 version which is supposed to be supported although
+-            //deprecated, see https://github.com/hamcrest/JavaHamcrest/pull/211 for
+-            //the discussion about the support
+-
+-        sourceSets = [ project.sourceSets.main, project.sourceSets.test ]
+-        ignoreFailures = false
+-        configFile = file("${project.rootDir}/checkstyle.xml")
+-
+-        configurations {
+-            checkstyle
+-        }
+-
+-        dependencies{
+-            assert project.hasProperty("checkstyleVersion")
+-            checkstyle "com.puppycrawl.tools:checkstyle:${checkstyleVersion}"
+-        }
+-    }
+-
+     test {
+         testLogging {
+             exceptionFormat = 'full'
+-- 
+2.42.4
+

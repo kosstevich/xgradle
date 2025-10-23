@@ -1,0 +1,24 @@
+From 2d93a32aedcd7ab6b4abba060cbe3f93875432e6 Mon Sep 17 00:00:00 2001
+From: Ivan Khanas <xeno@altlinux.org>
+Date: Mon, 25 Aug 2025 16:00:49 +0300
+Subject: [PATCH] Disable signing with key alt patch
+
+---
+ build.gradle.kts | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/build.gradle.kts b/build.gradle.kts
+index efb6047..afd5545 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -176,3 +176,7 @@ with(publishing) {
+ with(signing) {
+     sign(publishing.publications.getByName("custom"))
+ }
++
++tasks.withType<Sign>().configureEach {
++enabled = false
++}
+-- 
+2.42.4
+
