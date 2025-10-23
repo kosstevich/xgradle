@@ -35,10 +35,7 @@ public class Painter {
      * @return {@code true} if enabled and {@code false} otherwise
      */
     private static boolean isColorEnabled() {
-        if ("true".equals(System.getProperty("disable.ansi.color"))) {
-            return false;
-        }
-        return true;
+        return "true".equals(System.getProperty("enable.ansi.color"));
     }
 
     /**
