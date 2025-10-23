@@ -87,7 +87,7 @@ public class RepositoryManager {
         settings.getPluginManagement().getRepositories().flatDir(repo -> {
             repo.setName("SystemPluginsRepo");
             dirs.forEach(repo::dir);
-            logger.lifecycle("Configured PluginManagement repository with {} directories", dirs.size());
+            logger.info("Configured PluginManagement repository with {} directories", dirs.size());
         });
     }
 
@@ -172,7 +172,7 @@ public class RepositoryManager {
             List<File> allDirs = scanDirectories(libDir);
             allDirs.forEach(repo::dir);
             if (logger != null) {
-                logger.lifecycle("Configured DependencyManagement repository with {} directories", allDirs.size());
+                logger.info("Configured DependencyManagement repository with {} directories", allDirs.size());
             }
         });
     }
