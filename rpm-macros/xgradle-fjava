@@ -1,0 +1,76 @@
+#
+# Copyright 2025 BaseALT Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Authors: Ivan Khanas<xeno@altlinux.org>
+
+# =========================================================
+#                        Structure
+# =========================================================
+
+# Local Maven repository.
+%_mavenrepolocal $HOME/.m2
+
+# Gradle system directory.
+%_gradledir %_datadir/gradle
+
+# Gradle local cache.
+%_gradlecache $HOME/.gradle
+
+# Directory with .xml files for xmvn.
+%_mavenmetadatadir %_datadir/maven-metadata
+
+# =========================================================
+#			 Gradle tasks
+# =========================================================
+
+# Gradle launch script.
+%__gradle gradle
+
+# Configure repositories.
+%_xgradleflags -Dmaven.poms.dir=%_mavenpomdir -Djava.library.dir=%_javadir
+
+# Run Gradle publication task.
+%gradle_publish %__gradle publishToMavenLocal %_xgradleflags
+
+# Run Gradle build task.
+%gradle_build %__gradle build %_xgradleflags
+
+# Run Gradle check task.
+%gradle_check %__gradle check %_xgradleflags
+
+# =========================================================
+#                        Packaging
+# =========================================================
+
+# Cli tool for packaging with xgradle.
+%__xgradle_cli xgradle-tool
+
+# Artifacts installation paths for ALT Linux.
+%_artifacts_installation_paths --jar-installation-dir=%buildroot/%_javadir/%name
+
+# Registers pairs of POM and JAR files for xmvn from the local Maven repository.
+%gradle_register %__xgradle_cli --xmvn-register="%mvn_artifact" --searching-directory=%_mavenrepolocal
+
+# Registers BOM files for xmvn from the local Maven repository.
+%gradle_register_bom %__xgradle_cli --xmvn-register="%mvn_artifact" --register-bom --searching-directory=%_mavenrepolocal
+
+# Registers javadoc JAR files for xmvn from the local Maven repository.
+%gradle_register_javadoc %__xgradle_cli --register-javadoc --searching-directory=%_mavenrepolocal --install-prefix=%buildroot --jar-installation-dir=%buildroot%_javadocdir/%name
+
+# Installs the Gradle plugin POM and JAR files from the local Maven repository into the specified directories.
+%gradle_install_plugin %__xgradle_cli --install-gradle-plugin --searching-directory=%_mavenrepolocal %_artifacts_installation_paths
+
+# Installs artifacts registered for xmvn.
+%gradle_install %mvn_install
