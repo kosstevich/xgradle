@@ -134,7 +134,6 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
     private void addToOriginalConfigurations(Project project, String key,
                                              MavenCoordinate coord,
                                              Set<String> configNames) {
-
         if (isSelfDependency(project, coord)) {
             return;
         }
@@ -142,9 +141,13 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
         String notation = key + ":" + coord.getVersion();
         for (String configName : configNames) {
             Configuration config = project.getConfigurations().findByName(configName);
-            if (config != null) {
-                project.getDependencies().add(configName, notation);
-                trackArtifact(configName, notation);
+            if (config != null && canModifyConfiguration(config)) {
+                try {
+                    project.getDependencies().add(configName, notation);
+                    trackArtifact(configName, notation);
+                } catch (Exception e) {
+                    project.getLogger().debug("Cannot modify configuration '{}': {}", configName, e.getMessage());
+                }
             }
         }
     }
@@ -178,7 +181,7 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
         String notation = key + ":" + coord.getVersion();
 
         if (testContextDependencies.contains(key) || coord.isTestContext()) {
-            addToTestConfiguration(project, notation);
+            safeAddToConfiguration(project, "testImplementation", notation);
             return;
         }
 
@@ -186,23 +189,20 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
 
         if (type != null) {
             switch (type) {
-                case "API":
-                    project.getDependencies().add("api", notation);
-                    trackArtifact("api", notation);
-                    break;
-                case "IMPLEMENTATION":
-                    project.getDependencies().add("implementation", notation);
-                    trackArtifact("implementation", notation);
-                    break;
-                case "RUNTIME":
-                    project.getDependencies().add("runtimeOnly", notation);
-                    trackArtifact("runtimeOnly", notation);
-                    break;
-                case "COMPILE_ONLY":
-                    project.getDependencies().add("compileOnly", notation);
-                    trackArtifact("compileOnly", notation);
-                case "TEST":
-                    addToTestConfiguration(project, notation);
+                    case "API":
+                        safeAddToConfiguration(project, "api", notation);
+                        break;
+                    case "IMPLEMENTATION":
+                        safeAddToConfiguration(project, "implementation", notation);
+                        break;
+                    case "RUNTIME":
+                        safeAddToConfiguration(project, "runtimeOnly", notation);
+                        break;
+                    case "COMPILE_ONLY":
+                        safeAddToConfiguration(project, "compileOnly", notation);
+                        break;
+                    case "TEST":
+                        safeAddToConfiguration(project, "testImplementation", notation);
                     break;
                 default:
                     addBasedOnScopeDefault(project, key, notation);
@@ -275,14 +275,11 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
     private void addBasedOnScopeDefault(Project project, String key, String notation) {
         String scope = scopeManager.getScope(key);
         if ("provided".equals(scope) || "compileOnly".equals(scope)) {
-            project.getDependencies().add("compileOnly", notation);
-            trackArtifact("compileOnly", notation);
+            safeAddToConfiguration(project,"compileOnly", notation);
         } else if ("runtime".equals(scope) || "runtimeOnly".equals(scope)) {
-            project.getDependencies().add("runtimeOnly", notation);
-            trackArtifact("runtimeOnly", notation);
+            safeAddToConfiguration(project, "runtimeOnly", notation);
         } else {
-            project.getDependencies().add("implementation", notation);
-            trackArtifact("implementation", notation);
+            safeAddToConfiguration(project, "implementation", notation);
         }
     }
 
@@ -350,6 +347,22 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
         }
 
         return isSelf;
+    }
+
+    private void safeAddToConfiguration(Project project, String configName, String notation) {
+        Configuration config = project.getConfigurations().findByName(configName);
+        if (config != null && canModifyConfiguration(config)) {
+            try {
+                project.getDependencies().add(configName, notation);
+                trackArtifact(configName, notation);
+            } catch (Exception e) {
+                project.getLogger().debug("Cannot add to configuration '{}': {}", configName, e.getMessage());
+            }
+        }
+    }
+
+    private boolean canModifyConfiguration(Configuration configuration) {
+        return !configuration.getState().equals(Configuration.State.RESOLVED);
     }
 
     /**

@@ -185,7 +185,6 @@ public class ProjectDependenciesHandler {
         if (!newTestDeps.isEmpty()) {
             depLogger.logSection("New test dependencies from transitive closure", logger);
             depLogger.logNewDependencies(newTestDeps, logger);
-
             Map<String, MavenCoordinate> testArtifacts = versionScanner.scanSystemArtifacts(newTestDeps, logger);
             artifactResolver.getSystemArtifacts().putAll(testArtifacts);
         }
@@ -195,10 +194,10 @@ public class ProjectDependenciesHandler {
                 dependencyConfigurations,
                 testContextDependencies
         );
-        configurator.configure(gradle,
-                artifactResolver.getSystemArtifacts(),
-                dependencyConfigNames
-        );
+
+        gradle.allprojects(project -> {
+            configurator.configure(gradle, artifactResolver.getSystemArtifacts(), dependencyConfigNames);
+        });
 
         DependencySubstitutor substitutor = new DependencySubstitutor(
                 requestedVersions,
