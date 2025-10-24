@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     id 'java'
-    id("com.vanniktech.maven.publish") version "0.32.0"
+    id("com.gradleup.shadow") version "8.3.8"
 }
 
 group = 'org.example'
@@ -18,4 +18,8 @@ dependencies {
 
 jar {
     archiveBaseName = "testMixedBuild"
+}
+
+tasks.named('shadowJar') {
+    mainClassName = "com.example.Main"
 }

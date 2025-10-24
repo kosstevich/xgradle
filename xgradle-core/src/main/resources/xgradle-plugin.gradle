@@ -1,0 +1,12 @@
+initscript{
+    repositories {
+        flatDir{
+            dirs(gradle.gradleHomeDir.getAbsolutePath() + "/xgradle")
+        }
+    }
+    dependencies {
+        classpath name: "xgradle-core"
+    }
+}
+
+gradle.apply plugin: org.altlinux.xgradle.plugin.XGradlePlugin
