@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'com.vanniktech.maven.publish' version '0.32.0'
+    id 'com.gradleup.shadow' version '8.3.8'
 }
 
 repositories {
@@ -14,16 +14,4 @@ archivesBaseName = 'pluginsModule'
 dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation project(':dependenciesModule')
-}
-
-tasks.whenTaskAdded { task ->
-    if (task.name.startsWith('publish') &&
-        !task.name.contains('ToMavenLocal') &&
-        !task.name.contains('Local')) {
-        task.enabled = false
-    }
-}
-
-tasks.withType(Sign) {
-    enabled = false
 }
