@@ -58,7 +58,7 @@
 %__xgradle_cli xgradle-tool
 
 # Artifacts installation paths for ALT Linux.
-%_artifacts_installation_paths --jar-installation-dir=%buildroot/%_javadir/%name
+%_artifacts_installation_paths --jar-installation-dir=%buildroot/%_javadir/%name --pom-installation-dir=%buildroot/%_mavenpomdir/%name
 
 # Registers pairs of POM and JAR files for xmvn from the local Maven repository.
 %gradle_register %__xgradle_cli --xmvn-register="%mvn_artifact" --searching-directory=%_mavenrepolocal
