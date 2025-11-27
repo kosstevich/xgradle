@@ -17,7 +17,7 @@ package org.altlinux.xgradle.api.controllers;
 
 import com.beust.jcommander.JCommander;
 
-import org.altlinux.xgradle.cli.CliArgumentsContainer;
+import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
 
 import org.slf4j.Logger;
 

@@ -15,8 +15,8 @@
  */
 package integrationtests.parsertests;
 
-import org.altlinux.xgradle.model.MavenCoordinate;
-import org.altlinux.xgradle.services.DefaultPomParser;
+import org.altlinux.xgradle.impl.model.MavenCoordinate;
+import org.altlinux.xgradle.impl.services.DefaultPomParser;
 
 import org.gradle.api.logging.Logging;
 import org.gradle.api.logging.Logger;

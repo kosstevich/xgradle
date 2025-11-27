@@ -15,7 +15,7 @@
  */
 package org.altlinux.xgradle.api.installers;
 
-import org.altlinux.xgradle.ProcessingType;
+import org.altlinux.xgradle.impl.enums.ProcessingType;
 
 import java.util.List;
 import java.util.Optional;

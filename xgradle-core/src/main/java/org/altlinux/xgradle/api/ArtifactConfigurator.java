@@ -15,7 +15,7 @@
  */
 package org.altlinux.xgradle.api;
 
-import org.altlinux.xgradle.model.MavenCoordinate;
+import org.altlinux.xgradle.impl.model.MavenCoordinate;
 import org.gradle.api.invocation.Gradle;
 
 import java.util.Map;

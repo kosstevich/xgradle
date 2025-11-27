@@ -15,7 +15,7 @@
  */
 package org.altlinux.xgradle.api.containers;
 
-import org.altlinux.xgradle.ProcessingType;
+import org.altlinux.xgradle.impl.enums.ProcessingType;
 
 import java.nio.file.Path;
 import java.util.Collection;

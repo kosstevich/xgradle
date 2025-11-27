@@ -1,5 +1,3 @@
-import org.apache.groovy.lang.annotation.Incubating
-
 /*
  * Copyright 2025 BaseALT Ltd
  *
@@ -79,7 +77,7 @@ tasks.processResources {
 }
 
 application {
-    mainClass.set("${project.group}.Main")
+    mainClass.set("${project.group}.impl.Main")
 }
 
 tasks.shadowJar {
@@ -92,7 +90,7 @@ tasks.shadowJar {
 
     manifest{
         attributes(
-            "Main-Class" to "${project.group}.Main",
+            "Main-Class" to "${project.group}.impl.Main",
             "Implementation-Version" to project.version
         )
     }
