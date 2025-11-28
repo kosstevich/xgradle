@@ -16,6 +16,7 @@
 package org.altlinux.xgradle.impl;
 
 import com.beust.jcommander.JCommander;
+import com.beust.jcommander.internal.DefaultConsole;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -51,6 +52,7 @@ public class Main {
             JCommander jCommander = JCommander.newBuilder()
                     .addObject(arguments)
                     .programName("xgradle-tool")
+                    .console(new DefaultConsole())
                     .build();
 
             jCommander.setUsageFormatter(new CustomXgradleFormatter(jCommander));
@@ -68,16 +70,16 @@ public class Main {
             Injector injector = Guice.createInjector(new XGradleToolModule(toolConfig));
 
             DefaultInfoController defaultInfoController = new DefaultInfoController();
+
+        try {
+            defaultInfoController.configureInfo(jCommander, args, arguments);
+        } catch (Exception ex) {
+            logger.error("Could not find application.properties");
+        }
             XmvnCompatController xmvnController = injector.getInstance(DefaultXmvnCompatController.class);
             DefaultPluginsInstallationController pluginsController = injector.getInstance(DefaultPluginsInstallationController.class);
             DefaultBomXmvnCompatController bomController = injector.getInstance(DefaultBomXmvnCompatController.class);
             DefaultJavadocXmvnCompatController javadocController = injector.getInstance(DefaultJavadocXmvnCompatController.class);
-
-            try {
-                defaultInfoController.configureInfo(jCommander, args, arguments);
-            }catch (Exception ex) {
-                logger.error("Could not find application.properties");
-            }
 
             xmvnController.configureXmvnCompatFunctions(jCommander, args, arguments, logger);
             pluginsController.configurePluginArtifactsInstallation(jCommander, args, arguments, logger);

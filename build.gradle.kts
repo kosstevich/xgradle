@@ -39,7 +39,13 @@ subprojects {
     apply(plugin = "com.gradleup.shadow")
 
     java {
-        targetCompatibility = JavaVersion.VERSION_11
-        sourceCompatibility = JavaVersion.VERSION_11
+	// Please make sure that all dependencies in your distribution have Class file version 55.0 or lower.
+        if (providers.systemProperty("java11").isPresent){
+            sourceCompatibility = JavaVersion.VERSION_11
+            targetCompatibility = JavaVersion.VERSION_11
+        }else {
+            targetCompatibility = JavaVersion.VERSION_17
+            sourceCompatibility = JavaVersion.VERSION_17
+        }
     }
 }
