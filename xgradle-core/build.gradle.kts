@@ -25,6 +25,9 @@ dependencies {
     testImplementation(gradleTestKit())
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.testing)
+
+    shadow(libs.bundles.maven.tooling)
+    shadow(libs.plexus.utils)
 }
 
 gradlePlugin{
@@ -55,6 +58,8 @@ tasks.shadowJar {
     dependsOn("copyInitScript")
     archiveClassifier.set(null as String?)
 
+    configurations = listOf(project.configurations.shadow.get())
+
     metaInf {
         from(rootProject.projectDir) {
             include("LICENSE")
@@ -64,18 +69,7 @@ tasks.shadowJar {
 
     minimize()
 
-    exclude(
-        "**/*.properties", "**/*.svg",
-        "**/*.jpg", "**/*.kotlin_module", "**/*.pro",
-        "**/*.template", "**/*.gif", "**/*.bsh",
-        "**/*.xml", "**/*.groovy", "**/*.html",
-        "**/*.bin", "**/*.json", "**/*.png",
-        "**/*.so", "**/*.dll", "groovy*/**",
-        "kotlin*/**", "**/*.css", "**/*wrapper.jar",
-        "gradle*/**", "**/*.xsl"
-    )
-    exclude("org/junit/**")
-    exclude("org/opentest4j/**")
+    isEnableRelocation = true
 }
 
 tasks.named<Jar>("jar") {

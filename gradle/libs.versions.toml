@@ -10,6 +10,7 @@ jcommander = "3.0"
 slf4j = "1.7.36"
 guice = "5.1.0"
 guava = "33.4.6-jre"
+failureaccess = "1.0.1"
 jakarta-inject = "1.0.5"
 asm = "9.4"
 aopalliance = "1.0"
@@ -27,6 +28,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
+failureaccess = { module = "com.google.guava:failureaccess", version.ref = "failureaccess" }
 jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject" }
 log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
 aopalliance = { module = "aopalliance:aopalliance", version.ref = "aopalliance" }
@@ -34,7 +36,7 @@ asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 
 [bundles]
 maven-tooling = ["maven-model", "maven-model-builder"]
-guice-deps = ["jakarta-inject-api", "guava", "aopalliance", "asm"]
+guice-deps = ["jakarta-inject-api", "guava", "failureaccess", "aopalliance", "asm"]
 testing = ["junit-jupiter", "assertj-core", "apiguardian-api"]
 logging = ["slf4j-api", "slf4j-simple", "log4j-over-slf4j"]
 

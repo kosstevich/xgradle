@@ -31,6 +31,13 @@ dependencies {
     runtimeOnly(libs.bundles.guice.deps)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.testing)
+
+    shadow(libs.bundles.maven.tooling)
+    shadow(libs.bundles.logging)
+    shadow(libs.jcommander)
+    shadow(libs.plexus.utils)
+    shadow(libs.guice)
+    shadow(libs.bundles.guice.deps)
 }
 
 val gitCommitId = createCommitIdProvider()
@@ -84,7 +91,10 @@ application {
 tasks.shadowJar {
     dependsOn(tasks.processResources)
 
+    configurations = listOf(project.configurations.shadow.get())
+
     minimize()
+    isEnableRelocation = true
 
     archiveBaseName.set(project.name)
     archiveClassifier.set(null as String?)
