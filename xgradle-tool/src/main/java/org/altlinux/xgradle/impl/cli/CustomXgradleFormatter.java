@@ -67,7 +67,7 @@ public class CustomXgradleFormatter implements IUsageFormatter {
                         "| (optional) --artifacts=<artifactName> | (optional) --exclude-artifacts=<artifactName>\n\n")
                 .append("BOM registration: \n")
                 .append("xgradle-tool --xmvn-register=\"<registration command>\" --register-bom --searching-directory=<directory path> " +
-                        "| (optional) --artifacts=<artifactName> | (optional) --exclude-=<artifactName>\n\n")
+                        "| (optional) --artifacts=<artifactName> | (optional) --exclude-artifacts=<artifactName>\n\n")
                 .append("Javadoc registration: \n")
                 .append("xgradle-tool --register-javadoc --searching-directory=<directory path> " +
                         "--jar-installation-dir=<directory path> " +
