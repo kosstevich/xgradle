@@ -21,7 +21,9 @@ plugins {
 dependencies {
     compileOnly(gradleApi())
     implementation(libs.bundles.maven.tooling)
+    implementation(libs.guice)
     runtimeOnly(libs.plexus.utils)
+    runtimeOnly(libs.bundles.guice.deps)
     testImplementation(gradleTestKit())
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.testing)

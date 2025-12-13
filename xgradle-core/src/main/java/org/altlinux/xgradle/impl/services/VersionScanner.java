@@ -15,7 +15,7 @@
  */
 package org.altlinux.xgradle.impl.services;
 
-import org.altlinux.xgradle.api.ArtifactVerifier;
+import org.altlinux.xgradle.api.services.ArtifactVerifier;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
 import org.gradle.api.logging.Logger;

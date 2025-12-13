@@ -15,7 +15,7 @@
  */
 package org.altlinux.xgradle.impl.services;
 
-import org.altlinux.xgradle.api.PomParser;
+import org.altlinux.xgradle.api.services.PomParser;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
