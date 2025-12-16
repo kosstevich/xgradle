@@ -13,17 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.resolvers;
+package org.altlinux.xgradle.impl.enums;
 
-import org.gradle.api.invocation.Gradle;
+public enum DependencyContext {
 
-import java.util.Map;
+    MAIN,
 
-public interface DependencySubstitutor {
+    TEST,
 
-    void configure(Gradle gradle);
+    ALL;
 
-    Map<String, String> getOverrideLogs();
-
-    Map<String, String> getApplyLogs();
+    public static DependencyContext merge
+            (
+                    DependencyContext first,
+                    DependencyContext second
+            )
+    {
+        if(first == null) {
+            return second;
+        }
+        if(second == null) {
+            return first;
+        }
+        if(first == ALL && second == ALL) {
+            return ALL;
+        }
+        if(first != second) {
+            return ALL;
+        }
+        return first;
+    }
 }

@@ -13,19 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.processors;
+package org.altlinux.xgradle.api.collectors;
 
-import org.gradle.api.initialization.Settings;
+import org.gradle.api.logging.Logger;
+
+import java.nio.file.Path;
+import java.util.List;
 
 /**
- * Processor for Gradle plugin resolution.
+ * Collector for POM files in a repository directory.
+ * <p>
+ * Responsible for scanning the filesystem and returning
+ * a list of all POM files under the given root directory.
  */
-public interface PluginProcessor {
+public interface PomFilesCollector {
 
     /**
-     * Configures plugin resolution strategy (eachPlugin hook) for given settings.
+     * Collects all POM files under the given root directory.
      *
-     * @param settings Gradle settings instance
+     * @param rootDirectory root directory to scan
+     * @param logger logger for diagnostic messages
+     * @return list of POM file paths
      */
-    void configurePluginResolution(Settings settings);
+    List<Path> collectPomFiles(Path rootDirectory, Logger logger);
 }

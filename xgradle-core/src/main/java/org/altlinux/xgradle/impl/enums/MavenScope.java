@@ -13,17 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.resolvers;
+package org.altlinux.xgradle.impl.enums;
 
-import org.gradle.api.invocation.Gradle;
+public enum MavenScope {
 
-import java.util.Map;
+    COMPILE("compile"),
 
-public interface DependencySubstitutor {
+    RUNTIME("runtime"),
 
-    void configure(Gradle gradle);
+    PROVIDED("provided"),
 
-    Map<String, String> getOverrideLogs();
+    TEST("test");
 
-    Map<String, String> getApplyLogs();
+    private final String scope;
+
+    MavenScope(String scope) {
+        this.scope = scope;
+    }
+
+    /**
+     * Returns the canonical string representation of this scope.
+     *
+     * @return scope value as used in POM files
+     *
+     **/
+    public String getScope() {
+        return scope;
+    }
 }

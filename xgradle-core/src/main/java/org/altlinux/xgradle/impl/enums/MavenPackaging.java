@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.resolvers;
+package org.altlinux.xgradle.impl.enums;
 
-import org.gradle.api.invocation.Gradle;
+public enum MavenPackaging {
 
-import java.util.Map;
+    JAR("jar"),
 
-public interface DependencySubstitutor {
+    POM("pom");
 
-    void configure(Gradle gradle);
+   private final String packaging;
 
-    Map<String, String> getOverrideLogs();
+    MavenPackaging(String packaging) {
+        this.packaging = packaging;
+    }
 
-    Map<String, String> getApplyLogs();
+    public String getPackaging() {
+        return packaging;
+    }
 }

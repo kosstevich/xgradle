@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.services;
+package org.altlinux.xgradle.api.parsers;
 
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 

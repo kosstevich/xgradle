@@ -18,7 +18,7 @@ package org.altlinux.xgradle.impl.processors;
 import org.altlinux.xgradle.impl.managers.ScopeManager;
 import org.altlinux.xgradle.impl.managers.TransitiveDependencyManager;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.gradle.api.logging.Logger;
 import java.util.*;
 
@@ -49,13 +49,13 @@ public class TransitiveProcessor {
     /**
      * Constructs a transitive dependency processor.
      *
-     * @param pomFinder Service for locating POM files
+     * @param defaultPomFinder Service for locating POM files
      * @param logger Diagnostic logger
      * @param testContextDependencies Pre-identified test-scoped dependencies
      */
-    public TransitiveProcessor(PomFinder pomFinder, Logger logger, Set<String> testContextDependencies) {
+    public TransitiveProcessor(DefaultPomFinder defaultPomFinder, Logger logger, Set<String> testContextDependencies) {
         this.transitiveManager = new TransitiveDependencyManager(
-                pomFinder, logger, this.scopeManager
+                defaultPomFinder, logger, this.scopeManager
         );
         this.testContextDependencies = testContextDependencies;
     }

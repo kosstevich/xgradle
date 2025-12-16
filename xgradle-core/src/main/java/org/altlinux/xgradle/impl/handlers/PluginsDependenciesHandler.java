@@ -15,12 +15,13 @@
  */
 package org.altlinux.xgradle.impl.handlers;
 
+import com.google.inject.Inject;
+import org.altlinux.xgradle.api.maven.PomFinder;
 import org.altlinux.xgradle.impl.managers.PluginManager;
 
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.impl.services.DefaultPomParser;
 import org.altlinux.xgradle.impl.services.FileSystemArtifactVerifier;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.altlinux.xgradle.impl.services.VersionScanner;
 
 import org.gradle.api.initialization.Settings;
@@ -55,21 +56,23 @@ import org.gradle.api.logging.Logging;
 public class PluginsDependenciesHandler {
     private static final Logger logger = Logging.getLogger(PluginsDependenciesHandler.class);
     private final PluginManager pluginManager;
+    private final PomFinder pomFinder;
 
     /**
      * Constructs a new PluginsDependenciesHandler with default service implementations.
      *
      * <p>Initializes the handler with:
      * <ul>
-     *   <li>A {@link VersionScanner} configured with {@link PomFinder} and {@link FileSystemArtifactVerifier}</li>
+     *   <li>A {@link VersionScanner} configured with {@link DefaultPomFinder} and {@link FileSystemArtifactVerifier}</li>
      *   <li>A {@link PluginManager} to handle plugin resolution operations</li>
      * </ul>
      * </p>
      */
-    public PluginsDependenciesHandler() {
-        PomFinder pomFinder = new PomFinder(new DefaultPomParser());
-        VersionScanner versionScanner = new VersionScanner(pomFinder, new FileSystemArtifactVerifier());
-        this.pluginManager = new PluginManager(versionScanner, pomFinder, logger);
+    @Inject
+    public PluginsDependenciesHandler(PomFinder pomFinder) {
+        this.pomFinder = pomFinder;
+        VersionScanner versionScanner = new VersionScanner(defaultPomFinder, new FileSystemArtifactVerifier());
+        this.pluginManager = new PluginManager(versionScanner, defaultPomFinder, logger);
     }
 
     /**

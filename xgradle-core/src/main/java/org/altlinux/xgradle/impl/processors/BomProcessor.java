@@ -16,10 +16,12 @@
 package org.altlinux.xgradle.impl.processors;
 
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
+
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
+
 import java.util.*;
 
 /**
@@ -34,7 +36,7 @@ import java.util.*;
  *   <li>Post-processing removal of BOMs from dependency configurations</li>
  * </ul>
  *
- * <p>The core processing occurs in {@link #process(Set, PomFinder, Logger)} which expands
+ * <p>The core processing occurs in {@link #process(Set, DefaultPomFinder, Logger)} which expands
  * the project's dependency set by incorporating BOM-managed dependencies.
  *
  * @author Ivan Khanas
@@ -56,20 +58,20 @@ public class BomProcessor {
      * </ul>
      *
      * @param projectDependencies the initial set of project dependencies (as {@code groupId:artifactId[:version]} strings)
-     * @param pomFinder           a service used to resolve and parse POM files
+     * @param defaultPomFinder           a service used to resolve and parse POM files
      * @param logger              a logger for reporting processing steps
      *
      * @return the original set of project dependencies (unchanged),
      *         with side effects recorded in {@link #getBomManagedDeps()} and {@link #getManagedVersions()}
      */
-    public Set<String> process(Set<String> projectDependencies, PomFinder pomFinder, Logger logger) {
+    public Set<String> process(Set<String> projectDependencies, DefaultPomFinder defaultPomFinder, Logger logger) {
         managedVersions.clear();
         Queue<MavenCoordinate> bomQueue = new LinkedList<>();
 
         for (String dep : projectDependencies) {
             String[] parts = dep.split(":");
             if (parts.length < 2) continue;
-            MavenCoordinate coord = pomFinder.findPomForArtifact(parts[0], parts[1], logger);
+            MavenCoordinate coord = defaultPomFinder.findPomForArtifact(parts[0], parts[1], logger);
             if (coord != null && coord.isBom()) {
                 bomQueue.add(coord);
                 String bomKey = coord.getGroupId() + ":" + coord.getArtifactId();
@@ -81,7 +83,7 @@ public class BomProcessor {
             MavenCoordinate bom = bomQueue.poll();
             String bomKey = bom.getGroupId() + ":" + bom.getArtifactId() + ":" + bom.getVersion();
             List<String> managedDeps = new ArrayList<>();
-            List<MavenCoordinate> dependencies = pomFinder.getPomParser()
+            List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
                     .parseDependencyManagement(bom.getPomPath(), logger);
 
             for (MavenCoordinate dep : dependencies) {
@@ -103,7 +105,7 @@ public class BomProcessor {
      * Removes all BOM dependencies from Gradle project configurations.
      *
      * <p>This method iterates through all configurations in all projects and removes
-     * dependencies that were previously identified as BOMs during {@link #process(Set, PomFinder, Logger)}.
+     * dependencies that were previously identified as BOMs during {@link #process(Set, DefaultPomFinder, Logger)}.
      *
      * @param gradle the Gradle invocation object, providing access to all projects and configurations
      */

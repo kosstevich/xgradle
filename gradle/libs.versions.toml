@@ -18,20 +18,31 @@ aopalliance = "1.0"
 [libraries]
 maven-model = { module = "org.apache.maven:maven-model", version.ref = "maven-model" }
 maven-model-builder = { module = "org.apache.maven:maven-model-builder", version.ref = "maven-model-builder" }
+
 plexus-utils = { module = "org.codehaus.plexus:plexus-utils", version.ref = "plexus-utils" }
+
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj-core" }
+
 apiguardian-api = { module = "org.apiguardian:apiguardian-api", version.ref = "apiguardian" }
+
 jcommander = { module = "org.jcommander:jcommander", version.ref = "jcommander" }
+
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
+
 guice = { module = "com.google.inject:guice", version.ref = "guice" }
+
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 failureaccess = { module = "com.google.guava:failureaccess", version.ref = "failureaccess" }
+
 jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject" }
-log4j-over-slf4j = { module = "org.slf4j:log4j-over-slf4j", version.ref = "slf4j" }
+
 aopalliance = { module = "aopalliance:aopalliance", version.ref = "aopalliance" }
+
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
 
 [bundles]

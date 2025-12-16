@@ -30,6 +30,8 @@ dependencies {
 
     shadow(libs.bundles.maven.tooling)
     shadow(libs.plexus.utils)
+    shadow(libs.guice)
+    shadow(libs.bundles.guice.deps)
 }
 
 gradlePlugin{

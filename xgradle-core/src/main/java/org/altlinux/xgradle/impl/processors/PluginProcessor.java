@@ -15,8 +15,9 @@
  */
 package org.altlinux.xgradle.impl.processors;
 
+import com.google.inject.Inject;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.altlinux.xgradle.impl.services.VersionScanner;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
@@ -45,13 +46,13 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * plugin IDs without dots, as these are typically resolved through Gradle's built-in mechanisms.</p>
  *
  * @see VersionScanner
- * @see PomFinder
+ * @see DefaultPomFinder
  *
  * @author Ivan Khanas
  */
 public class PluginProcessor {
     private final VersionScanner versionScanner;
-    private final PomFinder pomFinder;
+    private final DefaultPomFinder defaultPomFinder;
     private final Logger logger;
     private final Set<String> processedBoms = new HashSet<>();
 
@@ -59,12 +60,13 @@ public class PluginProcessor {
      * Constructs a new PluginProcessor with the necessary services.
      *
      * @param versionScanner the scanner used to find plugin artifacts in local repositories
-     * @param pomFinder the finder used to locate and parse POM files for dependency information
+     * @param defaultPomFinder the finder used to locate and parse POM files for dependency information
      * @param logger the logger instance for reporting resolution activities
      */
-    public PluginProcessor(VersionScanner versionScanner, PomFinder pomFinder, Logger logger) {
+    @Inject
+    public PluginProcessor(VersionScanner versionScanner, DefaultPomFinder defaultPomFinder, Logger logger) {
         this.versionScanner = versionScanner;
-        this.pomFinder = pomFinder;
+        this.defaultPomFinder = defaultPomFinder;
         this.logger = logger;
     }
 
@@ -135,7 +137,7 @@ public class PluginProcessor {
         }
         processedBoms.add(bomKey);
 
-        List<MavenCoordinate> dependencies = pomFinder.getPomParser()
+        List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
                 .parseDependencies(bomCoord.getPomPath(), logger);
 
         for (MavenCoordinate dep : dependencies) {

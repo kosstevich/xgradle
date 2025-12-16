@@ -15,10 +15,13 @@
  */
 package org.altlinux.xgradle.impl.services;
 
-import org.altlinux.xgradle.api.services.PomParser;
+import org.altlinux.xgradle.api.parsers.PomParser;
+import org.altlinux.xgradle.impl.maven.PomHierarchyLoader;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
+
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+
 import org.gradle.api.logging.Logger;
 
 import java.nio.file.Path;

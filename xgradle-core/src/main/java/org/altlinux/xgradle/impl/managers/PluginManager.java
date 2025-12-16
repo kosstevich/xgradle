@@ -18,7 +18,7 @@ package org.altlinux.xgradle.impl.managers;
 import org.altlinux.xgradle.impl.handlers.PluginsDependenciesHandler;
 import org.altlinux.xgradle.impl.processors.PluginProcessor;
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.altlinux.xgradle.impl.services.VersionScanner;
 
 import org.gradle.api.initialization.Settings;
@@ -54,12 +54,12 @@ public class PluginManager {
      * Constructs a new PluginManager with the necessary services.
      *
      * @param versionScanner the scanner used to find plugin artifacts
-     * @param pomFinder the finder used to locate and parse POM files
+     * @param defaultPomFinder the finder used to locate and parse POM files
      * @param logger the logger instance for reporting configuration activities
      */
-    public PluginManager(VersionScanner versionScanner, PomFinder pomFinder, Logger logger) {
+    public PluginManager(VersionScanner versionScanner, DefaultPomFinder defaultPomFinder, Logger logger) {
         this.repositoryManager = new RepositoryManager(logger);
-        this.pluginProcessor = new PluginProcessor(versionScanner, pomFinder, logger);
+        this.pluginProcessor = new PluginProcessor(versionScanner, defaultPomFinder, logger);
         this.logger = logger;
     }
 

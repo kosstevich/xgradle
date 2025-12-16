@@ -18,7 +18,7 @@ package org.altlinux.xgradle.impl.handlers;
 import org.altlinux.xgradle.impl.resolvers.DependencySubstitutor;
 import org.altlinux.xgradle.impl.collectors.ConfigurationInfoCollector;
 import org.altlinux.xgradle.impl.collectors.DefaultDependencyCollector;
-import org.altlinux.xgradle.impl.collectors.info.ConfigurationInfo;
+import org.altlinux.xgradle.impl.model.ConfigurationInfo;
 import org.altlinux.xgradle.impl.configurators.DefaultArtifactConfigurator;
 import org.altlinux.xgradle.impl.managers.RepositoryManager;
 import org.altlinux.xgradle.impl.processors.BomProcessor;
@@ -27,7 +27,7 @@ import org.altlinux.xgradle.impl.resolvers.ArtifactResolver;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 import org.altlinux.xgradle.impl.services.DefaultPomParser;
 import org.altlinux.xgradle.impl.services.FileSystemArtifactVerifier;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.altlinux.xgradle.impl.services.VersionScanner;
 import org.altlinux.xgradle.impl.utils.logging.DependencyLogger;
 
@@ -66,7 +66,7 @@ public class ProjectDependenciesHandler {
      * service implementations for POM parsing and artifact verification.
      */
     public ProjectDependenciesHandler() {
-        this.versionScanner = new VersionScanner(new PomFinder(new DefaultPomParser()), new FileSystemArtifactVerifier());
+        this.versionScanner = new VersionScanner(new DefaultPomFinder(new DefaultPomParser()), new FileSystemArtifactVerifier());
         this.repositoryManager = new RepositoryManager(null);
     }
 
@@ -126,7 +126,7 @@ public class ProjectDependenciesHandler {
         Map<String, Set<String>> dependencyConfigNames = configurationCollector.getDependencyConfigNames();
 
         BomProcessor bomProcessor = new BomProcessor();
-        Set<String> allDeps = bomProcessor.process(projectDeps, new PomFinder(new DefaultPomParser()), logger);
+        Set<String> allDeps = bomProcessor.process(projectDeps, new DefaultPomFinder(new DefaultPomParser()), logger);
         bomProcessor.removeBomsFromConfigurations(gradle);
 
         ArtifactResolver artifactResolver = new ArtifactResolver(versionScanner);
@@ -158,7 +158,7 @@ public class ProjectDependenciesHandler {
         });
 
         TransitiveProcessor transitiveProcessor = new TransitiveProcessor(
-                new PomFinder(new DefaultPomParser()),
+                new DefaultPomFinder(new DefaultPomParser()),
                 logger,
                 testContextDependencies
         );

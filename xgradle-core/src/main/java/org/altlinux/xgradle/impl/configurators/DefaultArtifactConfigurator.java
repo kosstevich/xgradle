@@ -16,7 +16,7 @@
 package org.altlinux.xgradle.impl.configurators;
 
 import org.altlinux.xgradle.api.configurators.ArtifactConfigurator;
-import org.altlinux.xgradle.impl.collectors.info.ConfigurationInfo;
+import org.altlinux.xgradle.impl.model.ConfigurationInfo;
 import org.altlinux.xgradle.impl.managers.ScopeManager;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 

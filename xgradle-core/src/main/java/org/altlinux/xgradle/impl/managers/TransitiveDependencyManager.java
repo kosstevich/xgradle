@@ -16,7 +16,7 @@
 package org.altlinux.xgradle.impl.managers;
 
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.services.PomFinder;
+import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.gradle.api.logging.Logger;
 import java.util.*;
 
@@ -30,7 +30,7 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * @author Ivan Khanas
  */
 public class TransitiveDependencyManager {
-    private final PomFinder pomFinder;
+    private final DefaultPomFinder defaultPomFinder;
     private final Logger logger;
     private final ScopeManager scopeManager;
     private final Set<String> processedArtifacts = new HashSet<>();
@@ -39,14 +39,14 @@ public class TransitiveDependencyManager {
     /**
      * Creates a new BOM manager with required services.
      *
-     * @param pomFinder service for locating POM files
+     * @param defaultPomFinder service for locating POM files
      * @param logger Gradle logger instance
      */
     public TransitiveDependencyManager(
-            PomFinder pomFinder,
+            DefaultPomFinder defaultPomFinder,
             Logger logger,
             ScopeManager scopeManager) {
-        this.pomFinder = pomFinder;
+        this.defaultPomFinder = defaultPomFinder;
         this.logger = logger;
         this.scopeManager = scopeManager;
     }
@@ -70,7 +70,7 @@ public class TransitiveDependencyManager {
             MavenCoordinate current = queue.poll();
             if (current.getPomPath() == null) continue;
 
-            List<MavenCoordinate> dependencies = pomFinder.getPomParser()
+            List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
                     .parseDependencies(current.getPomPath(), logger);
 
             for (MavenCoordinate dep : dependencies) {
@@ -80,7 +80,7 @@ public class TransitiveDependencyManager {
 
                 MavenCoordinate resolvedDep = systemArtifacts.get(depKey);
                 if (resolvedDep == null) {
-                    resolvedDep = pomFinder.findPomForArtifact(
+                    resolvedDep = defaultPomFinder.findPomForArtifact(
                             dep.getGroupId(), dep.getArtifactId(), logger
                     );
                     if (resolvedDep == null) {

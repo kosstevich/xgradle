@@ -15,8 +15,7 @@
  */
 package org.altlinux.xgradle.impl.collectors;
 
-import org.altlinux.xgradle.impl.collectors.info.ConfigurationInfo;
-
+import org.altlinux.xgradle.impl.model.ConfigurationInfo;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.invocation.Gradle;
 

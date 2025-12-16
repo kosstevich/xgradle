@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.impl.services;
+package org.altlinux.xgradle.impl.maven;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
