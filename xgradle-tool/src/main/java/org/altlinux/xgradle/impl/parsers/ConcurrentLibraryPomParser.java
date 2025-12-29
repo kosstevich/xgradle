@@ -18,11 +18,12 @@ package org.altlinux.xgradle.impl.parsers;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.altlinux.xgradle.api.model.ArtifactCache;
+import org.altlinux.xgradle.api.caches.ArtifactCache;
 import org.altlinux.xgradle.api.containers.PomContainer;
+import org.altlinux.xgradle.api.model.ArtifactCoordinates;
+import org.altlinux.xgradle.api.model.ArtifactData;
+import org.altlinux.xgradle.api.model.ArtifactFactory;
 import org.altlinux.xgradle.api.parsers.PomParser;
-import org.altlinux.xgradle.impl.model.DefaultArtifactCoordinates;
-import org.altlinux.xgradle.impl.model.DefaultArtifactData;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -52,21 +53,31 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
+
+    private final ArtifactFactory artifactFactory;
     private final PomContainer pomContainer;
     private final ArtifactCache artifactCache;
+    private final Logger logger;
 
     /**
      * Constructs a new ConcurrentLibraryPomParser with required dependencies.
      *
      * @param pomContainer container for POM file management
      * @param artifactCache cache for tracking processed artifacts
+     * @param artifactFactory factory for creating artifact models
      */
     @Inject
-    public ConcurrentLibraryPomParser(PomContainer pomContainer, ArtifactCache artifactCache) {
+    ConcurrentLibraryPomParser(
+            PomContainer pomContainer,
+            ArtifactCache artifactCache,
+            ArtifactFactory artifactFactory,
+            Logger logger
+    ) {
+        this.artifactFactory = artifactFactory;
         this.pomContainer = pomContainer;
         this.artifactCache = artifactCache;
+        this.logger = logger;
     }
 
     /**
@@ -119,7 +130,7 @@ public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Pat
      */
     private void processPomFile(Path pomPath, ConcurrentHashMap<String, Path> artifactCoordinatesMap) {
         try {
-            DefaultArtifactData artifactData = extractArtifactData(pomPath);
+            ArtifactData artifactData = extractArtifactData(pomPath);
             if (artifactData == null) {
                 return;
             }
@@ -130,7 +141,7 @@ public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Pat
                     logger.debug("Added artifact: {}", artifactData.getCoordinates());
                 }
             } else {
-                DefaultArtifactData existing = (DefaultArtifactData) artifactCache.get(artifactData.getCoordinates());
+                ArtifactData existing = artifactCache.get(artifactData.getCoordinates());
                 logger.warn("Skipping duplicate artifact: {} (already processed from: {})",
                         artifactData.getCoordinates(), existing.getPomPath());
             }
@@ -145,7 +156,7 @@ public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Pat
      * @param pomPath path to the POM file
      * @return artifact data or null if extraction fails
      */
-    private DefaultArtifactData extractArtifactData(Path pomPath) {
+    private ArtifactData extractArtifactData(Path pomPath) {
         MavenXpp3Reader reader = new MavenXpp3Reader();
 
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {
@@ -163,15 +174,14 @@ public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Pat
             }
 
             if (groupId == null || artifactId == null || version == null) {
-                logger.warn("Incomplete coordinates in POM: {}. GroupId: {}, ArtifactId: {}, Version: {}",
+                logger.debug("Incomplete coordinates in POM: {}. GroupId: {}, ArtifactId: {}, Version: {}",
                         pomPath, groupId, artifactId, version);
-                return null;
             }
 
-            DefaultArtifactCoordinates coordinates = new DefaultArtifactCoordinates(groupId, artifactId, version);
+            ArtifactCoordinates coordinates = artifactFactory.coordinates(groupId, artifactId, version);
             Path jarPath = getJarPathFromModel(pomPath, model);
 
-            return new DefaultArtifactData(coordinates, model, pomPath, jarPath);
+            return artifactFactory.data(coordinates, model, pomPath, jarPath);
 
         } catch (IOException | XmlPullParserException e) {
             logger.error("Error reading POM file: {}", pomPath, e);
@@ -194,8 +204,8 @@ public class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Pat
             version = model.getParent().getVersion();
         }
 
-        if (artifactId == null || version == null) {
-            throw new RuntimeException("Could not determine artifactId or version for POM: " + pomPath);
+        if (artifactId == null) {
+            throw new RuntimeException("Could not determine artifactId: " + pomPath);
         }
 
         String jarFileName = artifactId + "-" + version + ".jar";

@@ -15,8 +15,18 @@
  */
 package org.altlinux.xgradle.impl.managers;
 
+import com.google.inject.Inject;
+
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import org.altlinux.xgradle.api.managers.ScopeManager;
+import org.altlinux.xgradle.api.managers.TransitiveDependencyManager;
+import org.altlinux.xgradle.api.maven.PomFinder;
+
+import org.altlinux.xgradle.api.parsers.PomParser;
+import org.altlinux.xgradle.impl.enums.MavenScope;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
+
 import org.gradle.api.logging.Logger;
 import java.util.*;
 
@@ -29,26 +39,33 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  *
  * @author Ivan Khanas
  */
-public class TransitiveDependencyManager {
-    private final DefaultPomFinder defaultPomFinder;
+@Singleton
+public class DefaultTransitiveDependencyManager implements TransitiveDependencyManager {
+    private final PomFinder pomFinder;
+    private final PomParser pomParser;
     private final Logger logger;
-    private final ScopeManager scopeManager;
+
+    private final ScopeManager mavenScopeManager;
     private final Set<String> processedArtifacts = new HashSet<>();
     private final Set<String> skippedDependencies = new HashSet<>();
 
     /**
      * Creates a new BOM manager with required services.
      *
-     * @param defaultPomFinder service for locating POM files
+     * @param pomFinder service for locating POM files
      * @param logger Gradle logger instance
      */
-    public TransitiveDependencyManager(
-            DefaultPomFinder defaultPomFinder,
-            Logger logger,
-            ScopeManager scopeManager) {
-        this.defaultPomFinder = defaultPomFinder;
+    @Inject
+    public DefaultTransitiveDependencyManager(
+            @Named("Default") PomFinder pomFinder,
+            @Named("Default") PomParser pomParser,
+            @Named("Maven") ScopeManager mavenScopeManager,
+            Logger logger
+            ) {
+        this.pomFinder = pomFinder;
+        this.pomParser = pomParser;
+        this.mavenScopeManager = mavenScopeManager;
         this.logger = logger;
-        this.scopeManager = scopeManager;
     }
 
     /**
@@ -62,6 +79,7 @@ public class TransitiveDependencyManager {
      *
      * @param systemArtifacts Map of initial artifacts (will be modified)
      */
+    @Override
     public void processTransitiveDependencies(Map<String, MavenCoordinate> systemArtifacts) {
         logger.lifecycle(green(">>> Processing transitive dependencies"));
         Queue<MavenCoordinate> queue = new LinkedList<>(systemArtifacts.values());
@@ -70,17 +88,17 @@ public class TransitiveDependencyManager {
             MavenCoordinate current = queue.poll();
             if (current.getPomPath() == null) continue;
 
-            List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
+            List<MavenCoordinate> dependencies = pomParser
                     .parseDependencies(current.getPomPath(), logger);
 
             for (MavenCoordinate dep : dependencies) {
                 String depKey = dep.getGroupId() + ":" + dep.getArtifactId();
-                scopeManager.updateScope(depKey, dep.getScope());
-                if ("test".equals(dep.getScope())) continue;
+                mavenScopeManager.updateScope(depKey, dep.getScope());
+                if (MavenScope.TEST.equals(dep.getScope())) continue;
 
                 MavenCoordinate resolvedDep = systemArtifacts.get(depKey);
                 if (resolvedDep == null) {
-                    resolvedDep = defaultPomFinder.findPomForArtifact(
+                    resolvedDep = pomFinder.findPomForArtifact(
                             dep.getGroupId(), dep.getArtifactId(), logger
                     );
                     if (resolvedDep == null) {
@@ -108,6 +126,7 @@ public class TransitiveDependencyManager {
      *
      * @return Set of skipped dependency IDs ("groupId:artifactId")
      */
+    @Override
     public Set<String> getSkippedDependencies() {
         return skippedDependencies;
     }

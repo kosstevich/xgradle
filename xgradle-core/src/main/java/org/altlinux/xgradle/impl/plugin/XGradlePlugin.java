@@ -74,6 +74,6 @@ public class XGradlePlugin implements Plugin<Gradle> {
 
         gradle.beforeSettings(pluginsHandler::handle);
         gradle.projectsLoaded(projectHandler::addRepository);
-        gradle.projectsEvaluated(projectHandler::handleAfterConfiguration);
+        gradle.projectsEvaluated(projectHandler::handle);
     }
 }

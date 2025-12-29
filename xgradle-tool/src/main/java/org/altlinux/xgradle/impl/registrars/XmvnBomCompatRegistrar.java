@@ -17,8 +17,8 @@ package org.altlinux.xgradle.impl.registrars;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.enums.ExitCode;
 import org.altlinux.xgradle.api.cli.CommandExecutor;
 import org.altlinux.xgradle.api.cli.CommandLineParser;
@@ -26,7 +26,6 @@ import org.altlinux.xgradle.api.processors.PomProcessor;
 import org.altlinux.xgradle.api.registrars.Registrar;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -42,11 +41,12 @@ import java.util.Set;
  * @author Ivan Khanas
  */
 @Singleton
-public class XmvnBomCompatRegistrar implements Registrar {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class XmvnBomCompatRegistrar implements Registrar {
+
     private final PomProcessor<Set<Path>> pomProcessor;
     private final CommandExecutor commandExecutor;
     private final CommandLineParser commandLineParser;
+    private final Logger logger;
 
     /**
      * Constructs a new DefaultXmvnBomCompatRegistrar with required dependencies.
@@ -56,14 +56,16 @@ public class XmvnBomCompatRegistrar implements Registrar {
      * @param commandLineParser parser for command-line parsing
      */
     @Inject
-    public XmvnBomCompatRegistrar(
-            @Named("Bom")PomProcessor<Set<Path>> pomProcessor,
+    XmvnBomCompatRegistrar(
+            @Bom PomProcessor<Set<Path>> pomProcessor,
             CommandExecutor commandExecutor,
-            CommandLineParser commandLineParser
+            CommandLineParser commandLineParser,
+            Logger logger
     ) {
         this.pomProcessor = pomProcessor;
         this.commandExecutor = commandExecutor;
         this.commandLineParser = commandLineParser;
+        this.logger = logger;
     }
 
     /**
@@ -92,7 +94,6 @@ public class XmvnBomCompatRegistrar implements Registrar {
             logger.info("Registering BOM: " + String.join(" ", currentCommand));
 
             ProcessBuilder processBuilder = new ProcessBuilder(currentCommand);
-            processBuilder.redirectErrorStream(true);
 
             try {
                 int exitCode = commandExecutor.execute(processBuilder);

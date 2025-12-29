@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @author Ivan Khanas
  */
-public class DefaultArtifactData implements ArtifactData {
+final class DefaultArtifactData implements ArtifactData {
 
     private final ArtifactCoordinates coordinates;
     private final Model model;
@@ -45,7 +45,7 @@ public class DefaultArtifactData implements ArtifactData {
      * @param pomPath path to the POM file
      * @param jarPath path to the JAR file (may be null for BOM files)
      */
-    public DefaultArtifactData(
+    DefaultArtifactData(
             ArtifactCoordinates coordinates,
             Model model,
             Path pomPath,

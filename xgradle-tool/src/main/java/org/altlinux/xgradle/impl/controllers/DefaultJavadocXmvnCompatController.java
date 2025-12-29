@@ -34,7 +34,7 @@ import org.slf4j.Logger;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultJavadocXmvnCompatController implements XmvnCompatController {
+class DefaultJavadocXmvnCompatController implements XmvnCompatController {
     private final JavadocInstaller javadocInstaller;
 
     /**
@@ -43,7 +43,7 @@ public class DefaultJavadocXmvnCompatController implements XmvnCompatController 
      * @param javadocInstaller installer for Javadoc artifacts
      */
     @Inject
-    public DefaultJavadocXmvnCompatController(JavadocInstaller javadocInstaller) {
+    DefaultJavadocXmvnCompatController(JavadocInstaller javadocInstaller) {
         this.javadocInstaller = javadocInstaller;
     }
 

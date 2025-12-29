@@ -26,10 +26,10 @@ import org.altlinux.xgradle.api.containers.ArtifactContainer;
 import org.altlinux.xgradle.api.registrars.Registrar;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.List;
@@ -41,11 +41,12 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class XmvnCompatRegistrar implements Registrar {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class XmvnCompatRegistrar implements Registrar {
+
     private final ArtifactContainer artifactContainer;
     private final CommandExecutor commandExecutor;
     private final CommandLineParser commandLineParser;
+    private final Logger logger;
 
     /**
      * Constructs a new XmvnCompatRegistrar with required dependencies.
@@ -53,16 +54,19 @@ public class XmvnCompatRegistrar implements Registrar {
      * @param artifactContainer container for artifact management
      * @param commandExecutor executor for command execution
      * @param commandLineParser parser for command-line parsing
+     * @param logger logger instance
      */
     @Inject
-    public XmvnCompatRegistrar(
+    XmvnCompatRegistrar(
             ArtifactContainer artifactContainer,
             CommandExecutor commandExecutor,
-            CommandLineParser commandLineParser
+            CommandLineParser commandLineParser,
+            Logger logger
     ) {
         this.artifactContainer = artifactContainer;
         this.commandExecutor = commandExecutor;
         this.commandLineParser = commandLineParser;
+        this.logger = logger;
     }
 
     /**
@@ -78,22 +82,27 @@ public class XmvnCompatRegistrar implements Registrar {
         Map<String, Path> artifacts;
         if (artifactName.isPresent()) {
             artifacts = artifactContainer.getArtifacts(searchingDir, artifactName, ProcessingType.LIBRARY);
-        }else {
+        } else {
             artifacts = artifactContainer.getArtifacts(searchingDir, Optional.empty(), ProcessingType.LIBRARY);
         }
 
-        List<String> commandParts = commandLineParser.parseCommandLine(registerCommand);
+        List<String> baseCommand = commandLineParser.parseCommandLine(registerCommand);
 
-        for(Map.Entry<String, Path> entry : artifacts.entrySet()) {
+        if (baseCommand.isEmpty()) {
+            throw new RuntimeException("Registration command is empty");
+        }
+
+        for (Map.Entry<String, Path> entry : artifacts.entrySet()) {
             String pomPath = entry.getKey();
             Path jarPath = entry.getValue();
 
-            commandParts.add(pomPath);
-            commandParts.add(jarPath.toString());
-            logger.info("\nRegistering pair: " + String.join(" ", commandParts));
+            List<String> currentCommand = new ArrayList<>(baseCommand);
+            currentCommand.add(pomPath);
+            currentCommand.add(jarPath.toString());
 
-            ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
-            processBuilder.redirectErrorStream(true);
+            logger.info("\nRegistering pair: " + String.join(" ", currentCommand));
+
+            ProcessBuilder processBuilder = new ProcessBuilder(currentCommand);
 
             try {
                 int exitCode = commandExecutor.execute(processBuilder);
@@ -101,14 +110,13 @@ public class XmvnCompatRegistrar implements Registrar {
                     throw new RuntimeException("Failed to register artifact, exit code: " + exitCode);
                 }
             } catch (IOException | InterruptedException e) {
-                throw new RuntimeException("Failed to execute command", e);
+                throw new RuntimeException("Failed to execute command: " + String.join(" ", currentCommand), e);
             }
-            commandParts.remove(pomPath);
-            commandParts.remove(jarPath.toString());
         }
+
         if (artifacts.isEmpty()) {
             logger.info("No artifacts registered");
-        }else {
+        } else {
             logger.info("Artifacts registered successfully");
         }
     }

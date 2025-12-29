@@ -64,7 +64,7 @@ public class DefaultPomFinder implements PomFinder {
      * @param filenameMatcher helper for matching POM filenames to artifacts
      */
     @Inject
-    public DefaultPomFinder(PomParser pomParser, MavenPomFilenameMatcher filenameMatcher) {
+    DefaultPomFinder(PomParser pomParser, MavenPomFilenameMatcher filenameMatcher) {
         this.pomParser = pomParser;
         this.filenameMatcher = filenameMatcher;
     }

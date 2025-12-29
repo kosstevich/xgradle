@@ -47,6 +47,8 @@ gradlePlugin{
 tasks.named<Copy>("processResources") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
+    apply(from = rootProject.file("version.gradle.kts"))
+
     from("main/resources/META-INF/gradle-plugins") {
         include("${project.group}.properties")
     }

@@ -15,6 +15,7 @@
  */
 package org.altlinux.xgradle.impl.redactors;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.altlinux.xgradle.api.redactors.ParentRedactor;
@@ -24,7 +25,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
@@ -38,8 +38,14 @@ import java.nio.file.Path;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultParentRemover implements ParentRedactor {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class DefaultParentRemover implements ParentRedactor {
+
+    private final Logger logger;
+
+    @Inject
+    DefaultParentRemover(Logger logger) {
+        this.logger = logger;
+    }
 
     /**
      * Removes the parent block from the specified POM file.

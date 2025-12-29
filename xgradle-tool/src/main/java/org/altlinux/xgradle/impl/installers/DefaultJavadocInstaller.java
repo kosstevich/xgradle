@@ -29,7 +29,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -51,10 +50,11 @@ import java.util.HashSet;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultJavadocInstaller implements JavadocInstaller {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class DefaultJavadocInstaller implements JavadocInstaller {
+
     private final ArtifactCollector artifactCollector;
     private final ToolConfig toolConfig;
+    private final Logger logger;
 
     /**
      * Constructs a new DefaultJavadocInstaller with required dependencies.
@@ -63,9 +63,14 @@ public class DefaultJavadocInstaller implements JavadocInstaller {
      * @param toolConfig configuration for the tool
      */
     @Inject
-    public DefaultJavadocInstaller(ArtifactCollector artifactCollector, ToolConfig toolConfig) {
+    DefaultJavadocInstaller(
+            ArtifactCollector artifactCollector,
+            ToolConfig toolConfig,
+            Logger logger
+    ) {
         this.artifactCollector = artifactCollector;
         this.toolConfig = toolConfig;
+        this.logger = logger;
     }
 
     /**

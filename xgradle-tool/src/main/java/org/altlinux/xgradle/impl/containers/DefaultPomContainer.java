@@ -32,7 +32,7 @@ import java.util.Set;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultPomContainer implements PomContainer {
+class DefaultPomContainer implements PomContainer {
     private final PomCollector pomCollector;
 
     /**
@@ -41,7 +41,7 @@ public class DefaultPomContainer implements PomContainer {
      * @param pomCollector collector for retrieving POM files
      */
     @Inject
-    public DefaultPomContainer(PomCollector pomCollector) {
+    DefaultPomContainer(PomCollector pomCollector) {
         this.pomCollector = pomCollector;
     }
 

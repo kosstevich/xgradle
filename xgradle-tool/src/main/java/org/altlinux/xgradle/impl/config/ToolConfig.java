@@ -18,6 +18,7 @@ package org.altlinux.xgradle.impl.config;
 import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Configuration class for the XGradle tool.
@@ -34,6 +35,9 @@ public class ToolConfig {
      * @param arguments container for command-line arguments
      */
     public ToolConfig(CliArgumentsContainer arguments) {
+
+        Objects.requireNonNull(arguments, "Cli arguments can not be null");
+
         this.arguments = arguments;
     }
 

@@ -19,8 +19,8 @@ import com.beust.jcommander.JCommander;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.enums.ExitCode;
 import org.altlinux.xgradle.api.controllers.XmvnCompatController;
 import org.altlinux.xgradle.api.registrars.Registrar;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultXmvnCompatController implements XmvnCompatController {
+class DefaultXmvnCompatController implements XmvnCompatController {
     private final Registrar registrar;
 
     /**
@@ -44,7 +44,7 @@ public class DefaultXmvnCompatController implements XmvnCompatController {
      * @param registrar registrar for library artifacts
      */
     @Inject
-    public DefaultXmvnCompatController(@Named("Library")Registrar registrar) {
+    DefaultXmvnCompatController(@Library Registrar registrar) {
         this.registrar = registrar;
     }
 

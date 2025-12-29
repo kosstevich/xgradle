@@ -28,7 +28,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -50,9 +49,10 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
-    private final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
+
     private final ArtifactContainer artifactContainer;
+    private final Logger logger;
 
     /**
      * Constructs a new DefaultPluginArtifactsInstaller with required dependencies.
@@ -60,8 +60,12 @@ public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
      * @param artifactContainer container for artifact management
      */
     @Inject
-    public DefaultPluginArtifactsInstaller(ArtifactContainer artifactContainer) {
+    DefaultPluginArtifactsInstaller(
+            ArtifactContainer artifactContainer,
+            Logger logger
+    ) {
         this.artifactContainer = artifactContainer;
+        this.logger = logger;
     }
 
     /**

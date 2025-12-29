@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.api.model;
+package org.altlinux.xgradle.api.caches;
+
+import org.altlinux.xgradle.api.model.ArtifactCoordinates;
+import org.altlinux.xgradle.api.model.ArtifactData;
 
 /**
  * Interface for global cache tracking processed artifacts to prevent duplicates.

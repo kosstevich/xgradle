@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.stream.Stream;
@@ -34,7 +35,7 @@ import java.util.stream.Stream;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultPomCollector implements PomCollector {
+class DefaultPomCollector implements PomCollector {
 
     /**
      * Collects all POM files from the specified directory and its subdirectories.
@@ -66,6 +67,9 @@ public class DefaultPomCollector implements PomCollector {
      */
     @Override
     public Set<Path> collectSelected(String searchingDir, List<String> artifactNames) {
+
+        Objects.requireNonNull(artifactNames, "artifactNames can not be null");
+
         Set<Path> result = new HashSet<>();
         try (Stream<Path> paths = Files.walk(Path.of(searchingDir), Integer.MAX_VALUE)) {
             paths.filter(Files::isRegularFile)

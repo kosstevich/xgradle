@@ -15,6 +15,8 @@
  */
 package org.altlinux.xgradle.impl.enums;
 
+import java.util.Locale;
+
 public enum MavenScope {
 
     COMPILE("compile"),
@@ -39,5 +41,27 @@ public enum MavenScope {
      **/
     public String getScope() {
         return scope;
+    }
+
+    /**
+     * Parses a scope string into MavenScope.
+     * Unknown or empty values are mapped to COMPILE.
+     *
+     * @param value scope string from POM (may be null)
+     * @return resolved scope, never null
+     */
+    public static MavenScope fromScope(String value) {
+        if (value == null || value.isBlank()) {
+            return COMPILE;
+        }
+
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+
+        for (MavenScope s : values()) {
+            if (s.scope.equals(normalized)) {
+                return s;
+            }
+        }
+        return COMPILE;
     }
 }

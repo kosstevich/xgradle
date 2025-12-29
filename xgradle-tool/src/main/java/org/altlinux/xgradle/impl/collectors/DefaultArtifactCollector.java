@@ -17,8 +17,10 @@ package org.altlinux.xgradle.impl.collectors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.GradlePlugin;
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Javadoc;
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.enums.ProcessingType;
 import org.altlinux.xgradle.api.collectors.ArtifactCollector;
 import org.altlinux.xgradle.api.processors.PomProcessor;
@@ -26,6 +28,7 @@ import org.altlinux.xgradle.api.processors.PomProcessor;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -35,7 +38,7 @@ import java.util.Optional;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultArtifactCollector implements ArtifactCollector {
+class DefaultArtifactCollector implements ArtifactCollector {
     private final PomProcessor<HashMap<String, Path>> libraryPomProcessor;
     private final PomProcessor<HashMap<String, Path>> gradlePlugins;
     private final PomProcessor<HashMap<String, Path>> javadocProcessor;
@@ -48,10 +51,10 @@ public class DefaultArtifactCollector implements ArtifactCollector {
      * @param javadocProcessor processor for Javadoc files
      */
     @Inject
-    public DefaultArtifactCollector(
-            @Named("Library") PomProcessor<HashMap<String, Path>> libraryPomProcessor,
-            @Named("gradlePlugins") PomProcessor<HashMap<String, Path>> gradlePlugins,
-            @Named("Javadoc") PomProcessor<HashMap<String, Path>> javadocProcessor
+    DefaultArtifactCollector(
+            @Library PomProcessor<HashMap<String, Path>> libraryPomProcessor,
+            @GradlePlugin PomProcessor<HashMap<String, Path>> gradlePlugins,
+            @Javadoc PomProcessor<HashMap<String, Path>> javadocProcessor
     ) {
         this.libraryPomProcessor = libraryPomProcessor;
         this.gradlePlugins = gradlePlugins;
@@ -68,14 +71,18 @@ public class DefaultArtifactCollector implements ArtifactCollector {
      */
     @Override
     public HashMap<String,Path> collect(String searchingDir, Optional<List<String>> artifactName, ProcessingType processingType) {
+
+        Objects.requireNonNull(processingType, "Processing type can not be null!");
+
         switch (processingType) {
             case PLUGINS:
                 return gradlePlugins.pomsFromDirectory(searchingDir, artifactName);
             case JAVADOC:
                 return javadocProcessor.pomsFromDirectory(searchingDir, artifactName);
             case LIBRARY:
-            default:
                 return libraryPomProcessor.pomsFromDirectory(searchingDir, artifactName);
+            default:
+                throw new IllegalStateException("Unsupported processing type: " + processingType);
         }
     }
 }

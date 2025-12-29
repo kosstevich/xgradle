@@ -17,8 +17,8 @@ package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.config.ToolConfig;
 import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.api.processors.PomProcessor;
@@ -38,7 +38,8 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> {
+class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> {
+
     private final PomParser<HashMap<String, Path>> pomParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
@@ -51,8 +52,8 @@ public class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, 
      * @param toolConfig the configuration for the tool
      */
     @Inject
-    public DefaultLibraryPomProcessor(
-            @Named("Library") PomParser<HashMap<String, Path>> pomParser,
+    DefaultLibraryPomProcessor(
+            @Library PomParser<HashMap<String, Path>> pomParser,
             PomService pomService,
             ToolConfig toolConfig
     ) {

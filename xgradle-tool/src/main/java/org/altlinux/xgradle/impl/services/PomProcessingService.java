@@ -2,11 +2,11 @@ package org.altlinux.xgradle.impl.services;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
 import org.altlinux.xgradle.api.services.PomService;
 import org.altlinux.xgradle.api.redactors.ParentRedactor;
 
+import org.altlinux.xgradle.impl.bindingannotations.pomprocessingoperations.Remove;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * @author Ivan Khanas
  */
 @Singleton
-public class PomProcessingService implements PomService {
+class PomProcessingService implements PomService {
     private final ParentRedactor parentRedactor;
 
     /**
@@ -39,7 +39,7 @@ public class PomProcessingService implements PomService {
      * @param parentRedactor redactor for removing parent blocks from POM files
      */
     @Inject
-    public PomProcessingService(@Named("Remove")ParentRedactor parentRedactor) {
+    PomProcessingService(@Remove ParentRedactor parentRedactor) {
         this.parentRedactor = parentRedactor;
     }
 

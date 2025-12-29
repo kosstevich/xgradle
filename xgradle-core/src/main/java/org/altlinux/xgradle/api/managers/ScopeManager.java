@@ -1,8 +1,16 @@
 package org.altlinux.xgradle.api.managers;
 
+import org.altlinux.xgradle.impl.enums.MavenScope;
+
 public interface ScopeManager {
 
-    void updateScope(String dependencyKey, String newScope);
+    /**
+     * Updates the stored scope for a dependency if the new scope has higher priority.
+     *
+     * @param dependencyKey dependency identifier (for example "groupId:artifactId")
+     * @param newScope new scope candidate
+     */
+    void updateScope(String dependencyKey, MavenScope newScope);
 
-    String getScope(String dependencyKey);
+    MavenScope getScope(String dependencyKey);
 }

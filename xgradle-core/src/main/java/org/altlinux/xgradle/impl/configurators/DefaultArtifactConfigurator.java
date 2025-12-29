@@ -16,8 +16,9 @@
 package org.altlinux.xgradle.impl.configurators;
 
 import org.altlinux.xgradle.api.configurators.ArtifactConfigurator;
+import org.altlinux.xgradle.impl.enums.MavenScope;
 import org.altlinux.xgradle.impl.model.ConfigurationInfo;
-import org.altlinux.xgradle.impl.managers.ScopeManager;
+import org.altlinux.xgradle.impl.managers.MavenScopeManager;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
 import org.gradle.api.Project;
@@ -45,7 +46,7 @@ import java.util.*;
  * @author Ivan Khanas
  */
 public class DefaultArtifactConfigurator implements ArtifactConfigurator {
-    private final ScopeManager scopeManager;
+    private final MavenScopeManager mavenScopeManager;
     private final Map<String, Set<String>> configurationArtifacts = new HashMap<>();
     private final Map<String, Set<ConfigurationInfo>> dependencyConfigurations;
     private final Set<String> testContextDependencies;
@@ -53,15 +54,15 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
     /**
      * Constructs a DefaultArtifactConfigurator with necessary dependency managers.
      *
-     * @param scopeManager manager for resolving dependency scopes
+     * @param mavenScopeManager manager for resolving dependency scopes
      * @param dependencyConfigurations mapping of dependency keys to their configuration metadata
      * @param testContextDependencies set of dependency keys marked for test context
      */
     public DefaultArtifactConfigurator(
-            ScopeManager scopeManager,
+            MavenScopeManager mavenScopeManager,
             Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
             Set<String> testContextDependencies) {
-        this.scopeManager = scopeManager;
+        this.mavenScopeManager = mavenScopeManager;
         this.dependencyConfigurations = dependencyConfigurations;
         this.testContextDependencies = testContextDependencies; }
 
@@ -167,7 +168,7 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
      *
      * <p>If no explicit type is found, a fallback resolution is performed using
      * {@link #addBasedOnScopeDefault(Project, String, String)} which relies on
-     * the dependency scope provided by {@link ScopeManager}.</p>
+     * the dependency scope provided by {@link MavenScopeManager}.</p>
      *
      * @param project the current Gradle project
      * @param key     the dependency key
@@ -258,7 +259,7 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
      * Adds an artifact to a configuration based on its resolved scope (fallback strategy).
      *
      * <p>This method is used when no explicit configuration type is available
-     * from metadata. It uses {@link ScopeManager} to determine the effective scope
+     * from metadata. It uses {@link MavenScopeManager} to determine the effective scope
      * of the dependency and maps it to the closest Gradle configuration:</p>
      *
      * <ul>
@@ -273,8 +274,8 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
      *                 ({@code group:artifact:version})
      */
     private void addBasedOnScopeDefault(Project project, String key, String notation) {
-        String scope = scopeManager.getScope(key);
-        if ("provided".equals(scope) || "compileOnly".equals(scope)) {
+        MavenScope scope = mavenScopeManager.getScope(key);
+        if (MavenScope.PROVIDED.equals(scope) || MavenScope.COMPILE.equals(scope)) {
             safeAddToConfiguration(project,"compileOnly", notation);
         } else if ("runtime".equals(scope) || "runtimeOnly".equals(scope)) {
             safeAddToConfiguration(project, "runtimeOnly", notation);
@@ -333,7 +334,7 @@ public class DefaultArtifactConfigurator implements ArtifactConfigurator {
             Object group = p.getGroup();
             String name = p.getName();
             if (group != null && name != null) {
-                String key = group.toString() + ":" + name;
+                String key = group + ":" + name;
                 projectIndex.put(key, p);
             }
         }

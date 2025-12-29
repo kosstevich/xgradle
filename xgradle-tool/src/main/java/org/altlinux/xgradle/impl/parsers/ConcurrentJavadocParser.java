@@ -27,7 +27,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -46,9 +45,10 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
+
     private final PomContainer pomContainer;
+    private final Logger logger;
 
     /**
      * Constructs a new ConcurrentJavadocParser with required dependencies.
@@ -56,8 +56,9 @@ public class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>>
      * @param pomContainer container for POM file management
      */
     @Inject
-    public ConcurrentJavadocParser(PomContainer pomContainer) {
+    ConcurrentJavadocParser(PomContainer pomContainer, Logger logger) {
         this.pomContainer = pomContainer;
+        this.logger = logger;
     }
 
     /**

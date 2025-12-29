@@ -18,6 +18,7 @@ package org.altlinux.xgradle.impl.cli;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 import com.beust.jcommander.Parameters;
+import com.google.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.Optional;
  * @author IvanKhanas
  */
 @Parameters(separators = "=")
+@Singleton
 public class CliArgumentsContainer {
 
     @Parameter(

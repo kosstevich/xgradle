@@ -15,8 +15,9 @@
  */
 package org.altlinux.xgradle.impl.processors;
 
-import org.altlinux.xgradle.impl.managers.ScopeManager;
-import org.altlinux.xgradle.impl.managers.TransitiveDependencyManager;
+import com.google.inject.Singleton;
+import org.altlinux.xgradle.impl.managers.MavenScopeManager;
+import org.altlinux.xgradle.impl.managers.DefaultTransitiveDependencyManager;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
 import org.gradle.api.logging.Logger;
@@ -34,14 +35,16 @@ import java.util.*;
  *   <li>Propagates test context flags through the dependency tree</li>
  * </ul>
  *
- * <p>Works in conjunction with {@link TransitiveDependencyManager} to traverse
+ * <p>Works in conjunction with {@link DefaultTransitiveDependencyManager} to traverse
  * and process the dependency graph.
  *
  * @author Ivan Khanas
  */
+@Singleton
 public class TransitiveProcessor {
-    private final TransitiveDependencyManager transitiveManager;
-    private final ScopeManager scopeManager = new ScopeManager();
+    private final DefaultTransitiveDependencyManager transitiveManager;
+    private final MavenScopeManager ScopeManager;
+
     private final Set<String> mainDependencies = new HashSet<>();
     private final Set<String> testDependencies = new HashSet<>();
     private final Set<String> testContextDependencies;
@@ -53,10 +56,12 @@ public class TransitiveProcessor {
      * @param logger Diagnostic logger
      * @param testContextDependencies Pre-identified test-scoped dependencies
      */
-    public TransitiveProcessor(DefaultPomFinder defaultPomFinder, Logger logger, Set<String> testContextDependencies) {
-        this.transitiveManager = new TransitiveDependencyManager(
-                defaultPomFinder, logger, this.scopeManager
-        );
+    public TransitiveProcessor(
+            DefaultPomFinder defaultPomFinder,
+            Logger logger,
+            Set<String> testContextDependencies
+    ) {
+
         this.testContextDependencies = testContextDependencies;
     }
 
@@ -116,8 +121,8 @@ public class TransitiveProcessor {
      *
      * @return scope manager instance containing scope information
      */
-    public ScopeManager getScopeManager() {
-        return scopeManager;
+    public MavenScopeManager getScopeManager() {
+        return mavenScopeManager;
     }
 
 

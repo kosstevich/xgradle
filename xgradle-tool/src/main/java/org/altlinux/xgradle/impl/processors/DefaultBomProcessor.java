@@ -17,8 +17,8 @@ package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.config.ToolConfig;
 import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.api.processors.PomProcessor;
@@ -37,7 +37,7 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultBomProcessor implements PomProcessor<Set<Path>> {
+class DefaultBomProcessor implements PomProcessor<Set<Path>> {
     private final PomParser<Set<Path>> pomParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
@@ -50,8 +50,8 @@ public class DefaultBomProcessor implements PomProcessor<Set<Path>> {
      * @param toolConfig the configuration for the tool
      */
     @Inject
-    public DefaultBomProcessor(
-            @Named("Bom") PomParser<Set<Path>> pomParser,
+    DefaultBomProcessor(
+            @Bom PomParser<Set<Path>> pomParser,
             PomService pomService,
             ToolConfig toolConfig
     ) {

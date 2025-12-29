@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.altlinux.xgradle.impl.model;
+package org.altlinux.xgradle.impl.caches;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 import com.google.inject.Singleton;
 
-import org.altlinux.xgradle.api.model.ArtifactCache;
+import org.altlinux.xgradle.api.caches.ArtifactCache;
 import org.altlinux.xgradle.api.model.ArtifactCoordinates;
 import org.altlinux.xgradle.api.model.ArtifactData;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of ArtifactCache.
@@ -31,8 +31,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultArtifactCache implements ArtifactCache {
-    private final Map<ArtifactCoordinates, ArtifactData> artifactCache = new ConcurrentHashMap<>();
+final class DefaultArtifactCache implements ArtifactCache {
+    private final Cache<ArtifactCoordinates, ArtifactData> artifactCache =
+            CacheBuilder.newBuilder().build();
 
     /**
      * Checks if the cache contains an artifact with the given coordinates.
@@ -42,7 +43,7 @@ public class DefaultArtifactCache implements ArtifactCache {
      */
     @Override
     public boolean contains(ArtifactCoordinates coordinates) {
-        return artifactCache.containsKey(coordinates);
+        return artifactCache.getIfPresent(coordinates) != null;
     }
 
     /**
@@ -53,7 +54,9 @@ public class DefaultArtifactCache implements ArtifactCache {
      */
     @Override
     public boolean add(ArtifactData artifactData) {
-        return artifactCache.putIfAbsent(artifactData.getCoordinates(), artifactData) == null;
+        return artifactCache
+                .asMap()
+                .putIfAbsent(artifactData.getCoordinates(), artifactData) == null;
     }
 
     /**
@@ -64,7 +67,7 @@ public class DefaultArtifactCache implements ArtifactCache {
      */
     @Override
     public ArtifactData get(ArtifactCoordinates coordinates) {
-        return artifactCache.get(coordinates);
+        return artifactCache.getIfPresent(coordinates);
     }
 
     /**
@@ -74,6 +77,7 @@ public class DefaultArtifactCache implements ArtifactCache {
      */
     @Override
     public int size() {
-        return artifactCache.size();
+        long sz = artifactCache.size();
+        return sz > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) sz;
     }
 }

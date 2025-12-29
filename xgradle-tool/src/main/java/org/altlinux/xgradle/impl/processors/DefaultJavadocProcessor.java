@@ -17,13 +17,14 @@ package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.api.model.ArtifactCoordinates;
+import org.altlinux.xgradle.api.model.ArtifactFactory;
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Javadoc;
 import org.altlinux.xgradle.impl.config.ToolConfig;
 import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.api.processors.PomProcessor;
 import org.altlinux.xgradle.api.services.PomService;
-import org.altlinux.xgradle.impl.model.DefaultArtifactCoordinates;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -50,11 +51,13 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
+class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
+
+    private final ArtifactFactory artifactFactory;
     private final PomParser<HashMap<String, Path>> javadocParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
+    private final Logger logger;
 
     /**
      * Constructs a new DefaultJavadocProcessor with required dependencies.
@@ -64,14 +67,18 @@ public class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Pat
      * @param toolConfig configuration for the tool
      */
     @Inject
-    public DefaultJavadocProcessor(
-            @Named("Javadoc") PomParser<HashMap<String, Path>> javadocParser,
+    DefaultJavadocProcessor(
+            ArtifactFactory artifactFactory,
+            @Javadoc PomParser<HashMap<String, Path>> javadocParser,
             PomService pomService,
-            ToolConfig toolConfig
+            ToolConfig toolConfig,
+            Logger logger
     ) {
+        this.artifactFactory =artifactFactory;
         this.javadocParser = javadocParser;
         this.pomService = pomService;
         this.toolConfig = toolConfig;
+        this.logger = logger;
     }
 
     /**
@@ -112,7 +119,7 @@ public class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Pat
             Path javadocPath = entry.getValue();
 
             try {
-                DefaultArtifactCoordinates coordinates = extractCoordinatesFromPom(pomPath);
+                ArtifactCoordinates coordinates = extractCoordinatesFromPom(pomPath);
                 if (coordinates != null) {
                     String coordKey = coordinates.getGroupId() + ":" + coordinates.getArtifactId();
 
@@ -148,7 +155,7 @@ public class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Pat
      * @throws IOException if an I/O error occurs during file reading
      * @throws XmlPullParserException if the POM file cannot be parsed
      */
-    private DefaultArtifactCoordinates extractCoordinatesFromPom(Path pomPath) throws IOException, XmlPullParserException {
+    private ArtifactCoordinates extractCoordinatesFromPom(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {
             Model model = reader.read(fis);
@@ -169,7 +176,7 @@ public class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Pat
                 return null;
             }
 
-            return new DefaultArtifactCoordinates(groupId, artifactId, version != null ? version : "unknown");
+            return artifactFactory.coordinates(groupId, artifactId, version != null ? version : "unknown");
         }
     }
 }

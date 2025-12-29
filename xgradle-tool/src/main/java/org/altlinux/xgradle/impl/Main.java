@@ -15,21 +15,14 @@
  */
 package org.altlinux.xgradle.impl;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.internal.DefaultConsole;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
-import org.altlinux.xgradle.impl.config.ToolConfig;
-import org.altlinux.xgradle.api.controllers.XmvnCompatController;
-import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
-import org.altlinux.xgradle.impl.cli.CustomXgradleFormatter;
+import org.altlinux.xgradle.api.application.Application;
+
 import org.altlinux.xgradle.impl.controllers.*;
 import org.altlinux.xgradle.impl.di.XGradleToolModule;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main entry point for the XGradle tool application.
@@ -38,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * @author Ivan Khanas
  */
 public class Main {
-    private static final Logger logger = LoggerFactory.getLogger("XGradleLogger");
 
     /**
      * Main method that serves as the application entry point.
@@ -47,43 +39,7 @@ public class Main {
      * @param args command-line arguments
      */
     public static void main(String[] args) {
-
-            CliArgumentsContainer arguments = new CliArgumentsContainer();
-            JCommander jCommander = JCommander.newBuilder()
-                    .addObject(arguments)
-                    .programName("xgradle-tool")
-                    .console(new DefaultConsole())
-                    .build();
-
-            jCommander.setUsageFormatter(new CustomXgradleFormatter(jCommander));
-
-
-            try {
-                jCommander.parse(args);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
-
-            arguments.validateMutuallyExclusive();
-
-            ToolConfig toolConfig = new ToolConfig(arguments);
-            Injector injector = Guice.createInjector(new XGradleToolModule(toolConfig));
-
-            DefaultInfoController defaultInfoController = new DefaultInfoController();
-
-        try {
-            defaultInfoController.configureInfo(jCommander, args, arguments);
-        } catch (Exception ex) {
-            logger.error("Could not find application.properties");
-        }
-            XmvnCompatController xmvnController = injector.getInstance(DefaultXmvnCompatController.class);
-            DefaultPluginsInstallationController pluginsController = injector.getInstance(DefaultPluginsInstallationController.class);
-            DefaultBomXmvnCompatController bomController = injector.getInstance(DefaultBomXmvnCompatController.class);
-            DefaultJavadocXmvnCompatController javadocController = injector.getInstance(DefaultJavadocXmvnCompatController.class);
-
-            xmvnController.configureXmvnCompatFunctions(jCommander, args, arguments, logger);
-            pluginsController.configurePluginArtifactsInstallation(jCommander, args, arguments, logger);
-            bomController.configureXmvnCompatFunctions(jCommander, args, arguments, logger);
-            javadocController.configureXmvnCompatFunctions(jCommander, args, arguments, logger);
+        Injector injector = Guice.createInjector(new XGradleToolModule());
+        injector.getInstance(Application.class).run(args).exit();
     }
 }

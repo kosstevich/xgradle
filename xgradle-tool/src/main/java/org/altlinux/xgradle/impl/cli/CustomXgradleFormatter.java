@@ -30,7 +30,6 @@ import java.util.List;
  *
  * @author Ivan Khanas
  */
-@Singleton
 public class CustomXgradleFormatter implements IUsageFormatter {
     private final JCommander commander;
 

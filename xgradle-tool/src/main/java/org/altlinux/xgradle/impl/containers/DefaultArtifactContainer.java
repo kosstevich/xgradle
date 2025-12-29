@@ -36,7 +36,7 @@ import java.nio.file.Path;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultArtifactContainer implements ArtifactContainer {
+class DefaultArtifactContainer implements ArtifactContainer {
     private final ArtifactCollector artifactCollector;
 
     /**
@@ -45,7 +45,7 @@ public class DefaultArtifactContainer implements ArtifactContainer {
      * @param artifactCollector collector for retrieving artifacts
      */
     @Inject
-    public DefaultArtifactContainer(ArtifactCollector artifactCollector) {
+    DefaultArtifactContainer(ArtifactCollector artifactCollector) {
         this.artifactCollector = artifactCollector;
     }
 

@@ -15,6 +15,8 @@
  */
 package org.altlinux.xgradle.impl.model;
 
+import org.altlinux.xgradle.impl.enums.MavenScope;
+
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -162,8 +164,8 @@ public class MavenCoordinate {
      *
      * @return scope string
      */
-    public String getScope() {
-        return scope;
+    public MavenScope getScope() {
+        return MavenScope.fromScope(scope);
     }
 
     /**

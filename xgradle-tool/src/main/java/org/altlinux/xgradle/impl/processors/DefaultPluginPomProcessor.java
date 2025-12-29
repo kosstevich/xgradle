@@ -17,8 +17,8 @@ package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.GradlePlugin;
 import org.altlinux.xgradle.impl.config.ToolConfig;
 import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.api.processors.PomProcessor;
@@ -38,7 +38,7 @@ import java.util.List;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, Path>> {
+class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, Path>> {
     private final PomParser<HashMap<String, Path>> pluginsParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
@@ -51,8 +51,8 @@ public class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, P
      * @param toolConfig the configuration for the tool
      */
     @Inject
-    public DefaultPluginPomProcessor(
-            @Named("gradlePlugins") PomParser<HashMap<String, Path>> pluginsParser,
+    DefaultPluginPomProcessor(
+            @GradlePlugin PomParser<HashMap<String, Path>> pluginsParser,
             PomService pomService,
             ToolConfig toolConfig
     ) {

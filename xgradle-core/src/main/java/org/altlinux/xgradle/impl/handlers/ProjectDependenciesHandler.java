@@ -106,7 +106,7 @@ public class ProjectDependenciesHandler {
      *
      * @param gradle current Gradle build instance
      */
-    public void handleAfterConfiguration(Gradle gradle) {
+    public void handle(Gradle gradle) {
         Project rootProject = gradle.getRootProject();
         if (logger == null) logger = rootProject.getLogger();
         DependencyLogger depLogger = new DependencyLogger();

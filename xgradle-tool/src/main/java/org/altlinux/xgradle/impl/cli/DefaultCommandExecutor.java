@@ -30,7 +30,7 @@ import java.io.InputStreamReader;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultCommandExecutor implements CommandExecutor {
+class DefaultCommandExecutor implements CommandExecutor {
 
     /**
      * Executes the specified process builder and returns the exit code.
@@ -44,6 +44,7 @@ public class DefaultCommandExecutor implements CommandExecutor {
     @Override
     public int execute(ProcessBuilder processBuilder) throws IOException, InterruptedException {
         Process process = processBuilder.start();
+        processBuilder.redirectErrorStream(true);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             reader.lines().forEach(System.out::println);
         }

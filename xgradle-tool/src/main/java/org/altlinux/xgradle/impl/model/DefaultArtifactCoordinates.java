@@ -25,7 +25,8 @@ import java.util.Objects;
  *
  * @author Ivan Khanas
  */
-public class DefaultArtifactCoordinates implements ArtifactCoordinates {
+final class DefaultArtifactCoordinates implements ArtifactCoordinates {
+
     private final String groupId;
     private final String artifactId;
     private final String version;
@@ -37,7 +38,7 @@ public class DefaultArtifactCoordinates implements ArtifactCoordinates {
      * @param artifactId the artifactId of the artifact
      * @param version the version of the artifact
      */
-    public DefaultArtifactCoordinates(String groupId, String artifactId, String version) {
+    DefaultArtifactCoordinates(String groupId, String artifactId, String version) {
         this.groupId = groupId;
         this.artifactId = artifactId;
         this.version = version;

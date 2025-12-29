@@ -17,10 +17,10 @@ package org.altlinux.xgradle.impl.controllers;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 
 import com.beust.jcommander.JCommander;
 
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.enums.ExitCode;
 import org.altlinux.xgradle.api.controllers.XmvnCompatController;
 import org.altlinux.xgradle.api.registrars.Registrar;
@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultBomXmvnCompatController implements XmvnCompatController {
+class DefaultBomXmvnCompatController implements XmvnCompatController {
     private final Registrar registrar;
 
     /**
@@ -44,7 +44,7 @@ public class DefaultBomXmvnCompatController implements XmvnCompatController {
      * @param registrar registrar for BOM artifacts
      */
     @Inject
-    public DefaultBomXmvnCompatController(@Named("Bom")Registrar registrar) {
+    DefaultBomXmvnCompatController(@Bom Registrar registrar) {
         this.registrar = registrar;
     }
 

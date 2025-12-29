@@ -35,7 +35,7 @@ import org.slf4j.Logger;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultPluginsInstallationController implements ArtifactsInstallationController {
+class DefaultPluginsInstallationController implements ArtifactsInstallationController {
     private final ArtifactsInstaller pluginArtifactsInstaller;
 
     /**
@@ -44,7 +44,7 @@ public class DefaultPluginsInstallationController implements ArtifactsInstallati
      * @param pluginArtifactsInstaller installer for plugin artifacts
      */
     @Inject
-    public DefaultPluginsInstallationController(ArtifactsInstaller pluginArtifactsInstaller) {
+    DefaultPluginsInstallationController(ArtifactsInstaller pluginArtifactsInstaller) {
         this.pluginArtifactsInstaller = pluginArtifactsInstaller;
     }
 
