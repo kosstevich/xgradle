@@ -23,7 +23,7 @@ import java.nio.file.Path;
  *
  * @author Ivan Khanas
  */
-public interface ParentRedactor{
+public interface PomRedactor{
 
     /**
      * Removes the parent block from the specified POM file.
@@ -31,4 +31,10 @@ public interface ParentRedactor{
      * @param pomPath path to the POM file to modify
      */
     void removeParent(Path pomPath);
+
+    void removeDependency(Path pomPath, String coords);
+
+    void changeDependency(Path pomPath, String origCoords, String targetCoords);
+
+    void addDependency(Path pomPath, String coords);
 }

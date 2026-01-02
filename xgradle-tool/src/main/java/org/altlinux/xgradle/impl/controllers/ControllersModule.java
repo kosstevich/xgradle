@@ -18,6 +18,7 @@ package org.altlinux.xgradle.impl.controllers;
 import com.google.inject.AbstractModule;
 
 import org.altlinux.xgradle.api.controllers.ArtifactsInstallationController;
+import org.altlinux.xgradle.api.controllers.PomRedactionController;
 import org.altlinux.xgradle.api.controllers.XmvnCompatController;
 
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
@@ -42,5 +43,7 @@ public final class ControllersModule extends AbstractModule {
 
         bind(ArtifactsInstallationController.class)
                 .to(DefaultPluginsInstallationController.class);
+
+        bind(PomRedactionController.class).to(DefaultPomRedactionController.class);
     }
 }

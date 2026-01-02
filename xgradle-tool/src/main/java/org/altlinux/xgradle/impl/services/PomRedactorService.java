@@ -3,10 +3,10 @@ package org.altlinux.xgradle.impl.services;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.altlinux.xgradle.api.containers.PomContainer;
+import org.altlinux.xgradle.api.redactors.PomRedactor;
 import org.altlinux.xgradle.api.services.PomService;
-import org.altlinux.xgradle.api.redactors.ParentRedactor;
 
-import org.altlinux.xgradle.impl.bindingannotations.pomprocessingoperations.Remove;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 
@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Service for POM file processing operations.
@@ -30,17 +31,41 @@ import java.util.stream.Collectors;
  * @author Ivan Khanas
  */
 @Singleton
-class PomProcessingService implements PomService {
-    private final ParentRedactor parentRedactor;
+class PomRedactorService implements PomService {
+    private final PomRedactor pomRedactor;
+    private final PomContainer pomContainer;
 
     /**
      * Constructs a new PomProcessingService with required dependencies.
      *
-     * @param parentRedactor redactor for removing parent blocks from POM files
+     * @param pomRedactor redactor for removing parent blocks from POM files
      */
     @Inject
-    PomProcessingService(@Remove ParentRedactor parentRedactor) {
-        this.parentRedactor = parentRedactor;
+    PomRedactorService(PomRedactor pomRedactor, PomContainer pomContainer) {
+        this.pomRedactor = pomRedactor;
+        this.pomContainer = pomContainer;
+
+    }
+
+    @Override
+    public void addDependency(Path pomOrDir, String coords, boolean recursive) {
+        targets(pomOrDir, recursive).forEach(p -> pomRedactor.addDependency(p, coords));
+    }
+
+    @Override
+    public void removeDependency(Path pomOrDir, String coords, boolean recursive) {
+        targets(pomOrDir, recursive).forEach(p -> pomRedactor.removeDependency(p, coords));
+    }
+
+    @Override
+    public void changeDependency(Path pomOrDir, String sourceCoords, String targetCoords, boolean recursive) {
+        targets(pomOrDir, recursive).forEach(p -> pomRedactor.changeDependency(p, sourceCoords, targetCoords));
+    }
+
+    private Stream<Path> targets(Path pomOrDir, boolean recursive) {
+        return recursive
+                ? pomContainer.getAllPoms(pomOrDir.toString()).stream()
+                : Stream.of(pomOrDir);
     }
 
     /**
@@ -111,7 +136,7 @@ class PomProcessingService implements PomService {
                     removeParentPoms.stream().anyMatch(filename::startsWith);
 
             if (shouldRemove) {
-                parentRedactor.removeParent(pomPath);
+                pomRedactor.removeParent(pomPath);
             }
         });
     }
@@ -135,7 +160,7 @@ class PomProcessingService implements PomService {
                     removeParentPoms.stream().anyMatch(fileName::startsWith);
 
             if (shouldRemove) {
-                parentRedactor.removeParent(bomFile);
+                pomRedactor.removeParent(bomFile);
             }
         });
     }

@@ -43,8 +43,8 @@ class DefaultCommandExecutor implements CommandExecutor {
      */
     @Override
     public int execute(ProcessBuilder processBuilder) throws IOException, InterruptedException {
-        Process process = processBuilder.start();
         processBuilder.redirectErrorStream(true);
+        Process process = processBuilder.start();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
             reader.lines().forEach(System.out::println);
         }

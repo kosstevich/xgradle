@@ -25,6 +25,8 @@ import org.altlinux.xgradle.api.cli.CommandLineParser;
 import org.altlinux.xgradle.api.containers.ArtifactContainer;
 import org.altlinux.xgradle.api.registrars.Registrar;
 
+import org.altlinux.xgradle.impl.exceptions.CommandExecutionException;
+import org.altlinux.xgradle.impl.exceptions.EmptyRegisterCommandException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -88,8 +90,8 @@ class XmvnCompatRegistrar implements Registrar {
 
         List<String> baseCommand = commandLineParser.parseCommandLine(registerCommand);
 
-        if (baseCommand.isEmpty()) {
-            throw new RuntimeException("Registration command is empty");
+        if (baseCommand == null || baseCommand.isEmpty()) {
+            throw new EmptyRegisterCommandException(registerCommand);
         }
 
         for (Map.Entry<String, Path> entry : artifacts.entrySet()) {
@@ -110,7 +112,7 @@ class XmvnCompatRegistrar implements Registrar {
                     throw new RuntimeException("Failed to register artifact, exit code: " + exitCode);
                 }
             } catch (IOException | InterruptedException e) {
-                throw new RuntimeException("Failed to execute command: " + String.join(" ", currentCommand), e);
+                throw new CommandExecutionException(currentCommand, e);
             }
         }
 

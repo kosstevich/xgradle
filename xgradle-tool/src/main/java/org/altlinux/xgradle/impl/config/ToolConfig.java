@@ -76,4 +76,8 @@ public class ToolConfig {
     public String getInstallPrefix() {
         return arguments.getInstallPrefix();
     }
+
+    public boolean isRecursive() {
+        return arguments.isRecursive();
+    }
 }

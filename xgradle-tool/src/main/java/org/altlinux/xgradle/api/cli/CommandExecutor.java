@@ -23,6 +23,7 @@ import java.io.IOException;
  *
  * @author Ivan Khanas
  */
+@FunctionalInterface
 public interface CommandExecutor {
 
     /**

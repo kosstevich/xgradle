@@ -23,6 +23,7 @@ import java.util.List;
  *
  * @author Ivan Khanas
  */
+@FunctionalInterface
 public interface CommandLineParser {
 
     /**

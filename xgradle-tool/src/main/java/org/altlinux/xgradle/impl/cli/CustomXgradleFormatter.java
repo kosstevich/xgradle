@@ -15,8 +15,6 @@
  */
 package org.altlinux.xgradle.impl.cli;
 
-import com.google.inject.Singleton;
-
 import com.beust.jcommander.IUsageFormatter;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
@@ -77,8 +75,18 @@ public class CustomXgradleFormatter implements IUsageFormatter {
                         "--searching-directory=<directory path> " +
                         "--pom-installation-dir=</path/to/poms/installation/location> " +
                         "--jar-installation-dir=</path/to/jars/installation/location>\n\n")
+                .append("-------------------------------\n\n")
+                .append("Dependency redaction (.pom files): \n")
+                .append("You can add -r or --recursive to process all .pom files under --searching-directory recursively.\n\n")
+                .append("Remove dependency: \n")
+                .append("xgradle-tool --searching-directory=</path/to/file.pom|/path/to/dir> --remove-dependency=<groupId:artifactId[:version[:scope]]>\n\n")
+                .append("Add dependency: \n")
+                .append("xgradle-tool --searching-directory=</path/to/file.pom|/path/to/dir> --add-dependency=<groupId:artifactId[:version[:scope]]>\n\n")
+                .append("Change dependency: \n")
+                .append("xgradle-tool --searching-directory=</path/to/file.pom|/path/to/dir> --change-dependency <sourceCoords> <targetCoords>\n\n")
                 .append("Usage: ").append(commander.getProgramName()).append(" [options]\n\n")
                 .append("Options:\n");
+
         List<ParameterDescription> parameters = commander.getParameters();
         parameters.sort(Comparator.comparingInt(p -> p.getParameter().order()));
 
@@ -89,6 +97,7 @@ public class CustomXgradleFormatter implements IUsageFormatter {
                     .append("\n\n");
         }
     }
+
 
     /**
      * Generates usage information for a specific command.

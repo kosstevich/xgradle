@@ -133,6 +133,34 @@ public class CliArgumentsContainer {
     )
     private boolean help;
 
+    @Parameter(
+            names = {"-r", "--recursive"},
+            description = "Recursively process all .pom files under --searching-directory",
+            order = 15
+    )
+    private boolean recursive;
+
+    @Parameter(
+            names = "--add-dependency",
+            description = "Add dependency: groupId:artifactId[:version[:scope]]",
+            order = 16
+    )
+    private List<String> addDependencies;
+
+    @Parameter(
+            names = "--remove-dependency",
+            description = "Remove dependency: groupId:artifactId[:version[:scope]]",
+            order = 17
+    )
+    private List<String> removeDependencies;
+
+    @Parameter(
+            names = "--change-dependency",
+            description = "Change dependency: pass exactly two values (source then target), each is groupId:artifactId[:version[:scope]]",
+            order = 18
+    )
+    private List<String> changeDependencies;
+
     public void validateMutuallyExclusive() {
         List<String> conflictingParams = new ArrayList<>();
 
@@ -144,16 +172,50 @@ public class CliArgumentsContainer {
             conflictingParams.add("--install-gradle-plugin and --register-bom");
         }
 
-        if(hasJavadocRegistration() && hasInstallPluginParameter()) {
+        if (hasJavadocRegistration() && hasInstallPluginParameter()) {
             conflictingParams.add("--register-javadoc and --install-gradle-plugin");
         }
 
-        if(hasJavadocRegistration() && hasBomRegistration()) {
+        if (hasJavadocRegistration() && hasBomRegistration()) {
             conflictingParams.add("--register-javadoc and --register-bom");
         }
 
-        if(hasJavadocRegistration() && hasXmvnRegister()) {
+        if (hasJavadocRegistration() && hasXmvnRegister()) {
             conflictingParams.add("--register-javadoc and --xmvn-register");
+        }
+
+        int depOps = (hasAddDependencies() ? 1 : 0)
+                + (hasRemoveDependencies() ? 1 : 0)
+                + (hasChangeDependencies() ? 1 : 0);
+
+        if (depOps > 1) {
+            conflictingParams.add("--add-dependency, --remove-dependency and --change-dependency");
+        }
+
+        if (hasChangeDependencies() && getChangeDependencies().size() != 2) {
+            throw new ParameterException("--change-dependency requires exactly 2 values: <source> <target>");
+        }
+
+        if (hasPomRedaction()) {
+            if (!hasSearchingDirectory()) {
+                throw new ParameterException("No searching directory specified");
+            }
+
+            if (hasXmvnRegister()) {
+                conflictingParams.add("--pom-redaction and --xmvn-register");
+            }
+
+            if (hasInstallPluginParameter()) {
+                conflictingParams.add("--pom-redaction and --install-gradle-plugin");
+            }
+
+            if (hasBomRegistration()) {
+                conflictingParams.add("--pom-redaction and --register-bom");
+            }
+
+            if (hasJavadocRegistration()) {
+                conflictingParams.add("--pom-redaction and --register-javadoc");
+            }
         }
 
         if (!conflictingParams.isEmpty()) {
@@ -350,4 +412,38 @@ public class CliArgumentsContainer {
     public boolean hasVersion() {
         return version;
     }
+
+
+    public boolean isRecursive() {
+        return recursive;
+    }
+
+    public boolean hasAddDependencies() {
+        return addDependencies != null && !addDependencies.isEmpty();
+    }
+
+    public List<String> getAddDependencies() {
+        return addDependencies;
+    }
+
+    public boolean hasRemoveDependencies() {
+        return removeDependencies != null && !removeDependencies.isEmpty();
+    }
+
+    public List<String> getRemoveDependencies() {
+        return removeDependencies;
+    }
+
+    public boolean hasChangeDependencies() {
+        return changeDependencies != null && !changeDependencies.isEmpty();
+    }
+
+    public List<String> getChangeDependencies() {
+        return changeDependencies;
+    }
+
+    public boolean hasPomRedaction() {
+        return hasAddDependencies() || hasRemoveDependencies() || hasChangeDependencies();
+    }
+
 }

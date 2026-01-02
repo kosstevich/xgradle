@@ -24,6 +24,7 @@ import java.util.Optional;
  *
  * @author Ivan Khanas
  */
+@FunctionalInterface
 public interface Registrar {
 
     /**

@@ -78,4 +78,10 @@ public interface PomService {
      * @return filtered map without snapshot artifacts
      */
     HashMap<String, Path> excludeSnapshots(HashMap<String, Path> artifactsMap);
+
+    void addDependency(Path pomOrDir, String coords, boolean recursive);
+
+    void removeDependency(Path pomOrDir, String coords, boolean recursive);
+
+    void changeDependency(Path pomOrDir, String sourceCoords, String targetCoords, boolean recursive);
 }

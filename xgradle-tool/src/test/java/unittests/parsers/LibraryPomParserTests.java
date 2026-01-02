@@ -41,10 +41,17 @@ import static org.mockito.Mockito.*;
 @DisplayName("PomParser<HashMap<String,Path>> contract (Library parser)")
 class LibraryPomParserTests {
 
-    @Mock private PomContainer pomContainer;
-    @Mock private ArtifactCache artifactCache;
-    @Mock private ArtifactFactory artifactFactory;
-    @Mock private Logger logger;
+    @Mock
+    private PomContainer pomContainer;
+
+    @Mock
+    private ArtifactCache artifactCache;
+
+    @Mock
+    private ArtifactFactory artifactFactory;
+
+    @Mock
+    private Logger logger;
 
     private PomParser<HashMap<String, Path>> parser;
 
@@ -66,12 +73,12 @@ class LibraryPomParserTests {
                 Key.get(new TypeLiteral<PomParser<HashMap<String, Path>>>() {}, Library.class)
         );
 
-        when(artifactCache.add(any())).thenReturn(true);
+        lenient().when(artifactCache.add(any())).thenReturn(true);
 
-        when(artifactFactory.coordinates(anyString(), anyString(), anyString()))
+        lenient().when(artifactFactory.coordinates(anyString(), anyString(), anyString()))
                 .thenAnswer(inv -> mock(ArtifactCoordinates.class));
 
-        when(artifactFactory.data(any(ArtifactCoordinates.class), any(Model.class), any(Path.class), any(Path.class)))
+        lenient().when(artifactFactory.data(any(ArtifactCoordinates.class), any(Model.class), any(Path.class), any(Path.class)))
                 .thenAnswer(inv -> {
                     ArtifactCoordinates coords = inv.getArgument(0);
                     Path pomPath = inv.getArgument(2);

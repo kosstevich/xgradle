@@ -17,15 +17,12 @@ package org.altlinux.xgradle.impl.redactors;
 
 import com.google.inject.AbstractModule;
 
-import org.altlinux.xgradle.api.redactors.ParentRedactor;
-import org.altlinux.xgradle.impl.bindingannotations.pomprocessingoperations.Remove;
+import org.altlinux.xgradle.api.redactors.PomRedactor;
 
 public final class RedactorsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ParentRedactor.class)
-                .annotatedWith(Remove.class)
-                .to(DefaultParentRemover.class);
+        bind(PomRedactor.class).to(DefaultPomRedactor.class);
     }
 }

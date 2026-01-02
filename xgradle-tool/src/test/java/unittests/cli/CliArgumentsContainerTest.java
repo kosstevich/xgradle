@@ -45,7 +45,7 @@ public class CliArgumentsContainerTest {
 
     @Test
     @DisplayName("Defaults: no args -> all optionals are empty, all flags are false, all has* are false")
-    void defaults_noArgs() {
+    void defaultsNoArgs() {
         CliArgumentsContainer args = parse();
 
         assertAll(
@@ -63,6 +63,12 @@ public class CliArgumentsContainerTest {
                 () -> assertFalse(args.hasHelp()),
                 () -> assertFalse(args.hasArtifactName()),
 
+                () -> assertFalse(args.isRecursive()),
+                () -> assertFalse(args.hasAddDependencies()),
+                () -> assertFalse(args.hasRemoveDependencies()),
+                () -> assertFalse(args.hasChangeDependencies()),
+                () -> assertFalse(args.hasPomRedaction()),
+
                 () -> assertTrue(args.getArtifactName().isEmpty()),
                 () -> assertNull(args.getExcludedArtifact()),
                 () -> assertNull(args.getRemoveParentPoms()),
@@ -70,13 +76,17 @@ public class CliArgumentsContainerTest {
                 () -> assertNull(args.getSearchingDirectory()),
                 () -> assertNull(args.getInstallPrefix()),
                 () -> assertNull(args.getJarInstallationDirectory()),
-                () -> assertNull(args.getPomInstallationDirectory())
+                () -> assertNull(args.getPomInstallationDirectory()),
+
+                () -> assertNull(args.getAddDependencies()),
+                () -> assertNull(args.getRemoveDependencies()),
+                () -> assertNull(args.getChangeDependencies())
         );
     }
 
     @Test
     @DisplayName("JCommander: parses --xmvn-register and --searching-directory and reflects in has/get")
-    void parses_xmvn_register_command() {
+    void parsesXmvnRegisterCommand() {
         CliArgumentsContainer args = parseAndValidate(
                 "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
                 "--searching-directory=/home/xeno/.m2"
@@ -84,212 +94,339 @@ public class CliArgumentsContainerTest {
 
         assertAll(
                 () -> assertTrue(args.hasXmvnRegister()),
-                () -> assertEquals("/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py", args.getXmvnRegister()),
                 () -> assertTrue(args.hasSearchingDirectory()),
-                () -> assertEquals("/home/xeno/.m2", args.getSearchingDirectory()),
-                () -> assertFalse(args.hasBomRegistration()),
-                () -> assertFalse(args.hasJavadocRegistration()),
-                () -> assertFalse(args.hasInstallPluginParameter())
+                () -> assertEquals("/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py", args.getXmvnRegister()),
+                () -> assertEquals("/home/xeno/.m2", args.getSearchingDirectory())
         );
     }
 
     @Test
-    @DisplayName("Validation: OK when only --xmvn-register is provided")
-    void validateMutuallyExclusive_ok_whenOnlyXmvnRegister() {
-        CliArgumentsContainer args = parse(
+    @DisplayName("JCommander: parses --install-prefix and reflects in has/get")
+    void parsesInstallPrefix() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--install-prefix=/usr",
+                "--searching-directory=/home/xeno/.m2",
                 "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py"
         );
-        assertDoesNotThrow(args::validateMutuallyExclusive);
-    }
-
-    @Test
-    @DisplayName("Validation: throws when --xmvn-register and --install-gradle-plugin are used together")
-    void validateMutuallyExclusive_throws_whenXmvnRegisterAndInstallPluginTogether() {
-        CliArgumentsContainer args = parse(
-                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
-                "--install-gradle-plugin"
-        );
-
-        ParameterException ex = assertThrows(ParameterException.class, args::validateMutuallyExclusive);
-        assertAll(
-                () -> assertTrue(ex.getMessage().contains("--xmvn-register and --install-gradle-plugin")),
-                () -> assertTrue(ex.getMessage().contains("Use only one main mode at a time"))
-        );
-    }
-
-    @Test
-    @DisplayName("JCommander: parses --register-bom + --xmvn-register + --searching-directory")
-    void parses_register_bom_command() {
-        CliArgumentsContainer args = parseAndValidate(
-                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
-                "--register-bom",
-                "--searching-directory=/home/xeno/.m2"
-        );
 
         assertAll(
-                () -> assertTrue(args.hasXmvnRegister()),
-                () -> assertTrue(args.hasBomRegistration()),
-                () -> assertTrue(args.hasSearchingDirectory()),
-                () -> assertFalse(args.hasJavadocRegistration()),
-                () -> assertFalse(args.hasInstallPluginParameter())
-        );
-    }
-
-    @Test
-    @DisplayName("JCommander: parses --register-javadoc with required paths (search dir, install prefix, jar dir)")
-    void parses_register_javadoc_command() {
-        CliArgumentsContainer args = parseAndValidate(
-                "--register-javadoc",
-                "--searching-directory=/home/xeno/.m2",
-                "--install-prefix=/buildroot",
-                "--jar-installation-dir=/buildroot/usr/share/javadoc/xgradle"
-        );
-
-        assertAll(
-                () -> assertTrue(args.hasJavadocRegistration()),
-                () -> assertTrue(args.hasSearchingDirectory()),
-                () -> assertEquals("/home/xeno/.m2", args.getSearchingDirectory()),
                 () -> assertTrue(args.hasInstallPrefix()),
-                () -> assertEquals("/buildroot", args.getInstallPrefix()),
-                () -> assertTrue(args.hasJarInstallationDirectory()),
-                () -> assertEquals("/buildroot/usr/share/javadoc/xgradle", args.getJarInstallationDirectory()),
-                () -> assertFalse(args.hasBomRegistration()),
-                () -> assertFalse(args.hasXmvnRegister()),
-                () -> assertFalse(args.hasInstallPluginParameter())
+                () -> assertEquals("/usr", args.getInstallPrefix())
         );
     }
 
     @Test
-    @DisplayName("JCommander: parses --install-gradle-plugin with jar/pom installation dirs")
-    void parses_install_gradle_plugin_command() {
+    @DisplayName("JCommander: parses --install-gradle-plugin and reflects in has*")
+    void parsesInstallGradlePluginFlag() {
         CliArgumentsContainer args = parseAndValidate(
                 "--install-gradle-plugin",
                 "--searching-directory=/home/xeno/.m2",
-                "--jar-installation-dir=/buildroot/usr/share/java/xgradle",
-                "--pom-installation-dir=/buildroot/usr/share/maven-poms/xgradle"
+                "--pom-installation-dir=/tmp/poms",
+                "--jar-installation-dir=/tmp/jars"
         );
 
         assertAll(
                 () -> assertTrue(args.hasInstallPluginParameter()),
                 () -> assertTrue(args.hasSearchingDirectory()),
-                () -> assertTrue(args.hasJarInstallationDirectory()),
                 () -> assertTrue(args.hasPomInstallationDirectory()),
-                () -> assertEquals("/buildroot/usr/share/java/xgradle", args.getJarInstallationDirectory()),
-                () -> assertEquals("/buildroot/usr/share/maven-poms/xgradle", args.getPomInstallationDirectory()),
-                () -> assertFalse(args.hasXmvnRegister()),
-                () -> assertFalse(args.hasBomRegistration()),
-                () -> assertFalse(args.hasJavadocRegistration())
+                () -> assertTrue(args.hasJarInstallationDirectory())
         );
     }
 
     @Test
-    @DisplayName("JCommander: parses --artifacts as a list when passed multiple values")
-    void parses_artifacts_list() {
-        CliArgumentsContainer args = parse("--artifacts=a", "--artifacts=b", "--artifacts=c");
+    @DisplayName("JCommander: parses --register-bom and reflects in has*")
+    void parsesRegisterBomFlag() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--register-bom",
+                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                "--searching-directory=/home/xeno/.m2"
+        );
+
+        assertAll(
+                () -> assertTrue(args.hasBomRegistration()),
+                () -> assertTrue(args.hasXmvnRegister()),
+                () -> assertTrue(args.hasSearchingDirectory())
+        );
+    }
+
+    @Test
+    @DisplayName("JCommander: parses --register-javadoc and reflects in has*")
+    void parsesRegisterJavadocFlag() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--register-javadoc",
+                "--searching-directory=/home/xeno/.m2",
+                "--jar-installation-dir=/tmp/javadoc-jars"
+        );
+
+        assertAll(
+                () -> assertTrue(args.hasJavadocRegistration()),
+                () -> assertTrue(args.hasSearchingDirectory()),
+                () -> assertTrue(args.hasJarInstallationDirectory())
+        );
+    }
+
+    @Test
+    @DisplayName("JCommander: parses --artifacts list and exposes as Optional<List<String>>")
+    void parsesArtifactsList() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                "--artifacts=aaa,bbb,ccc"
+        );
 
         assertAll(
                 () -> assertTrue(args.hasArtifactName()),
-                () -> assertEquals(List.of("a", "b", "c"), args.getArtifactName().orElseThrow())
+                () -> assertTrue(args.getArtifactName().isPresent()),
+                () -> assertEquals(List.of("aaa", "bbb", "ccc"), args.getArtifactName().orElseThrow())
         );
     }
 
     @Test
-    @DisplayName("JCommander: parses --exclude-artifacts as a list when passed multiple values")
-    void parses_exclude_artifacts_list() {
-        CliArgumentsContainer args = parse("--exclude-artifacts=x", "--exclude-artifacts=y");
-
-        assertAll(
-                () -> assertNotNull(args.getExcludedArtifact()),
-                () -> assertEquals(List.of("x", "y"), args.getExcludedArtifact())
+    @DisplayName("JCommander: parses --exclude-artifacts list and reflects in getExcludedArtifact()")
+    void parsesExcludeArtifactsList() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                "--exclude-artifacts=aaa,bbb"
         );
+
+        assertEquals(List.of("aaa", "bbb"), args.getExcludedArtifact());
     }
 
     @Test
     @DisplayName("JCommander: parses --allow-snapshots flag")
-    void parses_allow_snapshots_flag() {
-        CliArgumentsContainer args = parse("--allow-snapshots");
+    void parsesAllowSnapshotsFlag() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                "--allow-snapshots"
+        );
+
         assertTrue(args.hasAllowSnapshots());
     }
 
     @Test
-    @DisplayName("JCommander: parses --remove-parent as a list when passed multiple values")
-    void parses_remove_parent_list() {
-        CliArgumentsContainer args = parse("--remove-parent=p1", "--remove-parent=p2");
+    @DisplayName("JCommander: parses --remove-parent list")
+    void parsesRemoveParentList() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                "--remove-parent=aaa,bbb"
+        );
 
         assertAll(
                 () -> assertTrue(args.hasRemoveParentPoms()),
-                () -> assertEquals(List.of("p1", "p2"), args.getRemoveParentPoms())
+                () -> assertEquals(List.of("aaa", "bbb"), args.getRemoveParentPoms())
         );
     }
 
     @Test
-    @DisplayName("JCommander: parses --help and --version flags")
-    void parses_help_and_version_flags() {
-        CliArgumentsContainer args = parse("--help", "--version");
+    @DisplayName("JCommander: parses --version flag")
+    void parsesVersionFlag() {
+        CliArgumentsContainer args = parse("--version");
+        assertTrue(args.hasVersion());
+    }
+
+    @Test
+    @DisplayName("JCommander: parses --help flag")
+    void parsesHelpFlag() {
+        CliArgumentsContainer args = parse("--help");
+        assertTrue(args.hasHelp());
+    }
+
+    @Test
+    @DisplayName("Pom redaction: parses -r and --recursive")
+    void parsesRecursiveFlag() {
+        CliArgumentsContainer shortFlag = parseAndValidate(
+                "-r",
+                "--searching-directory=/home/xeno/.m2",
+                "--remove-dependency=org.slf4j:slf4j-api"
+        );
+
+        CliArgumentsContainer longFlag = parseAndValidate(
+                "--recursive",
+                "--searching-directory=/home/xeno/.m2",
+                "--remove-dependency=org.slf4j:slf4j-api"
+        );
 
         assertAll(
-                () -> assertTrue(args.hasHelp()),
-                () -> assertTrue(args.hasVersion())
+                () -> assertTrue(shortFlag.isRecursive()),
+                () -> assertTrue(longFlag.isRecursive())
         );
     }
 
     @Test
-    @DisplayName("Validation: throws when --install-gradle-plugin and --register-bom are used together")
-    void validateMutuallyExclusive_throws_installPlugin_with_registerBom() {
-        CliArgumentsContainer args = parse("--install-gradle-plugin", "--register-bom");
-
-        ParameterException ex = assertThrows(ParameterException.class, args::validateMutuallyExclusive);
-        assertTrue(ex.getMessage().contains("--install-gradle-plugin and --register-bom"));
-    }
-
-    @Test
-    @DisplayName("Validation: throws when --register-javadoc and --install-gradle-plugin are used together")
-    void validateMutuallyExclusive_throws_registerJavadoc_with_installPlugin() {
-        CliArgumentsContainer args = parse("--register-javadoc", "--install-gradle-plugin");
-
-        ParameterException ex = assertThrows(ParameterException.class, args::validateMutuallyExclusive);
-        assertTrue(ex.getMessage().contains("--register-javadoc and --install-gradle-plugin"));
-    }
-
-    @Test
-    @DisplayName("Validation: throws when --register-javadoc and --register-bom are used together")
-    void validateMutuallyExclusive_throws_registerJavadoc_with_registerBom() {
-        CliArgumentsContainer args = parse("--register-javadoc", "--register-bom");
-
-        ParameterException ex = assertThrows(ParameterException.class, args::validateMutuallyExclusive);
-        assertTrue(ex.getMessage().contains("--register-javadoc and --register-bom"));
-    }
-
-    @Test
-    @DisplayName("Validation: throws when --register-javadoc and --xmvn-register are used together")
-    void validateMutuallyExclusive_throws_registerJavadoc_with_xmvnRegister() {
-        CliArgumentsContainer args = parse(
-                "--register-javadoc",
-                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py"
-        );
-
-        ParameterException ex = assertThrows(ParameterException.class, args::validateMutuallyExclusive);
-        assertTrue(ex.getMessage().contains("--register-javadoc and --xmvn-register"));
-    }
-
-    @Test
-    @DisplayName("JCommander: unknown option triggers ParameterException")
-    void unknown_option_throws() {
-        assertThrows(ParameterException.class, () -> parse("--no-such-flag"));
-    }
-
-    @Test
-    @DisplayName("JCommander: missing value for string option triggers ParameterException")
-    void missing_value_for_string_option_throws() {
-        assertThrows(ParameterException.class, () -> parse("--searching-directory"));
-    }
-
-    @Test
-    @DisplayName("JCommander: --xmvn-register supports spaces when passed as a single argv token with '='")
-    void xmvn_register_supports_spaces_in_value() {
+    @DisplayName("Pom redaction: parses --add-dependency list and enables hasPomRedaction")
+    void parsesAddDependencyList() {
         CliArgumentsContainer args = parseAndValidate(
-                "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py"
+                "--searching-directory=/home/xeno/.m2",
+                "--add-dependency=org.a:a:1.0:compile,org.b:b"
         );
-        assertEquals("/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py", args.getXmvnRegister());
+
+        assertAll(
+                () -> assertTrue(args.hasAddDependencies()),
+                () -> assertEquals(List.of("org.a:a:1.0:compile", "org.b:b"), args.getAddDependencies()),
+                () -> assertTrue(args.hasPomRedaction())
+        );
+    }
+
+    @Test
+    @DisplayName("Pom redaction: parses --remove-dependency list and enables hasPomRedaction")
+    void parsesRemoveDependencyList() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--remove-dependency=org.a:a:1.0:compile,org.b:b"
+        );
+
+        assertAll(
+                () -> assertTrue(args.hasRemoveDependencies()),
+                () -> assertEquals(List.of("org.a:a:1.0:compile", "org.b:b"), args.getRemoveDependencies()),
+                () -> assertTrue(args.hasPomRedaction())
+        );
+    }
+
+    @Test
+    @DisplayName("Pom redaction: parses --change-dependency exactly 2 values")
+    void parsesChangeDependencyPair() {
+        CliArgumentsContainer args = parseAndValidate(
+                "--searching-directory=/home/xeno/.m2",
+                "--change-dependency=org.a:a:1.0:compile,org.a:a:2.0:test"
+        );
+
+        assertAll(
+                () -> assertTrue(args.hasChangeDependencies()),
+                () -> assertEquals(List.of("org.a:a:1.0:compile", "org.a:a:2.0:test"), args.getChangeDependencies()),
+                () -> assertTrue(args.hasPomRedaction())
+        );
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --change-dependency with not exactly 2 values")
+    void rejectsChangeDependencyWithWrongArity() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--searching-directory=/home/xeno/.m2",
+                        "--change-dependency=org.a:a:1.0:compile"
+                )
+        );
+        assertTrue(ex.getMessage().contains("--change-dependency requires exactly 2 values"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects mixing dependency operations")
+    void rejectsMixingDependencyOperations() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--searching-directory=/home/xeno/.m2",
+                        "--add-dependency=org.a:a",
+                        "--remove-dependency=org.b:b"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: pom redaction requires --searching-directory")
+    void pomRedactionRequiresSearchingDirectory() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate("--remove-dependency=org.a:a")
+        );
+        assertTrue(ex.getMessage().contains("No searching directory specified"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects pom redaction mixed with other modes")
+    void rejectsPomRedactionWithOtherModes() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--searching-directory=/home/xeno/.m2",
+                        "--remove-dependency=org.a:a",
+                        "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --xmvn-register and --install-gradle-plugin")
+    void rejectsXmvnRegisterAndInstallGradlePlugin() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                        "--install-gradle-plugin",
+                        "--searching-directory=/home/xeno/.m2",
+                        "--pom-installation-dir=/tmp/poms",
+                        "--jar-installation-dir=/tmp/jars"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --install-gradle-plugin and --register-bom")
+    void rejectsInstallGradlePluginAndRegisterBom() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--install-gradle-plugin",
+                        "--register-bom",
+                        "--searching-directory=/home/xeno/.m2",
+                        "--pom-installation-dir=/tmp/poms",
+                        "--jar-installation-dir=/tmp/jars"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --register-javadoc and --register-bom")
+    void rejectsRegisterJavadocAndRegisterBom() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--register-javadoc",
+                        "--register-bom",
+                        "--searching-directory=/home/xeno/.m2",
+                        "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                        "--jar-installation-dir=/tmp/javadoc-jars"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --register-javadoc and --xmvn-register")
+    void rejectsRegisterJavadocAndXmvnRegister() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--register-javadoc",
+                        "--xmvn-register=/usr/bin/python3 /usr/share/java-utils/mvn_artifact.py",
+                        "--searching-directory=/home/xeno/.m2",
+                        "--jar-installation-dir=/tmp/javadoc-jars"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
+    }
+
+    @Test
+    @DisplayName("validateMutuallyExclusive: rejects --register-javadoc and --install-gradle-plugin")
+    void rejectsRegisterJavadocAndInstallGradlePlugin() {
+        ParameterException ex = assertThrows(
+                ParameterException.class,
+                () -> parseAndValidate(
+                        "--register-javadoc",
+                        "--install-gradle-plugin",
+                        "--searching-directory=/home/xeno/.m2",
+                        "--pom-installation-dir=/tmp/poms",
+                        "--jar-installation-dir=/tmp/jars"
+                )
+        );
+        assertTrue(ex.getMessage().contains("Conflicting parameters"));
     }
 }

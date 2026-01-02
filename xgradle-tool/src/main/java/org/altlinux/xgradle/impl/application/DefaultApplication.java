@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.altlinux.xgradle.api.application.Application;
 import org.altlinux.xgradle.api.controllers.ArtifactsInstallationController;
+import org.altlinux.xgradle.api.controllers.PomRedactionController;
 import org.altlinux.xgradle.api.controllers.XmvnCompatController;
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Javadoc;
@@ -30,6 +31,7 @@ final class DefaultApplication implements Application {
     private final Provider<XmvnCompatController> bomXmvnController;
     private final Provider<XmvnCompatController> javadocXmvnController;
     private final Provider<ArtifactsInstallationController> pluginsController;
+    private final Provider<PomRedactionController> pomRedactionController;
 
     @Inject
     DefaultApplication(
@@ -39,7 +41,8 @@ final class DefaultApplication implements Application {
             @Library Provider<XmvnCompatController> libraryXmvnController,
             @Bom Provider<XmvnCompatController> bomXmvnController,
             @Javadoc Provider<XmvnCompatController> javadocXmvnController,
-            Provider<ArtifactsInstallationController> pluginsController
+            Provider<ArtifactsInstallationController> pluginsController,
+            Provider<PomRedactionController> pomRedactionController
     ) {
         this.jCommander = jCommander;
         this.cliArgs = cliArgs;
@@ -48,6 +51,7 @@ final class DefaultApplication implements Application {
         this.bomXmvnController = bomXmvnController;
         this.javadocXmvnController = javadocXmvnController;
         this.pluginsController = pluginsController;
+        this.pomRedactionController = pomRedactionController;
     }
 
     @Override
@@ -68,6 +72,17 @@ final class DefaultApplication implements Application {
             jCommander.usage();
             return ExitCode.SUCCESS;
         }
+
+        if (cliArgs.hasPomRedaction()) {
+            try {
+                pomRedactionController.get().configure();
+                return ExitCode.SUCCESS;
+            } catch (RuntimeException e) {
+                logger.error(e.getMessage(), e);
+                return ExitCode.ERROR;
+            }
+        }
+
 
         if (cliArgs.hasVersion()) {
             try {

@@ -25,6 +25,9 @@ import org.altlinux.xgradle.api.cli.CommandLineParser;
 import org.altlinux.xgradle.api.processors.PomProcessor;
 import org.altlinux.xgradle.api.registrars.Registrar;
 
+import org.altlinux.xgradle.impl.exceptions.CommandExecutionException;
+import org.altlinux.xgradle.impl.exceptions.EmptyRegisterCommandException;
+import org.altlinux.xgradle.impl.exceptions.RegistrationFailedException;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -88,6 +91,10 @@ class XmvnBomCompatRegistrar implements Registrar {
 
         List<String> commandParts = commandLineParser.parseCommandLine(command);
 
+        if (commandParts == null || commandParts.isEmpty()) {
+            throw new EmptyRegisterCommandException(command);
+        }
+
         for (Path part : artifacts) {
             List<String> currentCommand = new ArrayList<>(commandParts);
             currentCommand.add(part.toString());
@@ -99,10 +106,10 @@ class XmvnBomCompatRegistrar implements Registrar {
                 int exitCode = commandExecutor.execute(processBuilder);
 
                 if (exitCode != ExitCode.SUCCESS.getExitCode()) {
-                    throw new RuntimeException("Failed to register artifact, exit code: " + exitCode);
+                    throw new RegistrationFailedException(currentCommand, exitCode);
                 }
             } catch (IOException | InterruptedException e) {
-                throw new RuntimeException(e);
+                throw new CommandExecutionException(currentCommand, e);
             }
         }
 

@@ -22,6 +22,6 @@ public final class ServicesModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(PomService.class).to(PomProcessingService.class);
+        bind(PomService.class).to(PomRedactorService.class);
     }
 }

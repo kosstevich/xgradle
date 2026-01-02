@@ -16,6 +16,7 @@ import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.enums.ExitCode;
 import org.altlinux.xgradle.impl.enums.ProcessingType;
+import org.altlinux.xgradle.impl.exceptions.EmptyRegisterCommandException;
 import org.altlinux.xgradle.impl.registrars.RegistrarsModule;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -167,11 +168,11 @@ public class XmvnCompatRegistrarTests {
 
         when(commandLineParser.parseCommandLine("")).thenReturn(List.of());
 
-        RuntimeException exception = assertThrows(
-                RuntimeException.class,
+        EmptyRegisterCommandException exception = assertThrows(
+                EmptyRegisterCommandException.class,
                 () -> registrar.registerArtifacts(DIRECTORY, "", Optional.empty())
         );
-                assertEquals("Registration command is empty", exception.getMessage());
+                assertEquals("Register command is empty: " + "\'\'", exception.getMessage());
                 verify(commandExecutor, never()).execute(any());
     }
 

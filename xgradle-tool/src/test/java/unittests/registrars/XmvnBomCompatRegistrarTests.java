@@ -14,6 +14,7 @@ import org.altlinux.xgradle.api.processors.PomProcessor;
 import org.altlinux.xgradle.api.registrars.Registrar;
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.enums.ExitCode;
+import org.altlinux.xgradle.impl.exceptions.EmptyRegisterCommandException;
 import org.altlinux.xgradle.impl.registrars.RegistrarsModule;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -141,23 +142,23 @@ class XmvnBomCompatRegistrarTests {
         verify(logger).info("No BOM registered");
     }
 
-//    @Test
-//    @DisplayName("Empty parsed command (when there is at least one BOM) => throws and does not execute")
-//    void throwsWhenCommandEmpty() throws IOException, InterruptedException {
-//        Set<Path> boms = new LinkedHashSet<>();
-//        boms.add(Path.of("/repo/bom-1.pom"));
-//
-//        when(bomPomProcessor.pomsFromDirectory(eq(DIRECTORY), eq(Optional.empty()))).thenReturn(boms);
-//        when(commandLineParser.parseCommandLine("   ")).thenReturn(List.of());
-//
-//        RuntimeException ex = assertThrows(
-//                RuntimeException.class,
-//                () -> registrar.registerArtifacts(DIRECTORY, "   ", Optional.empty())
-//        );
-//        assertEquals("Register command is empty", ex.getMessage());
-//
-//        verify(commandExecutor, never()).execute(any());
-//    }
+    @Test
+    @DisplayName("Empty parsed command (when there is at least one BOM) => throws and does not execute")
+    void throwsWhenCommandEmpty() throws IOException, InterruptedException {
+        Set<Path> boms = new LinkedHashSet<>();
+        boms.add(Path.of("/repo/bom-1.pom"));
+
+        when(bomPomProcessor.pomsFromDirectory(eq(DIRECTORY), eq(Optional.empty()))).thenReturn(boms);
+        when(commandLineParser.parseCommandLine("   ")).thenReturn(List.of());
+
+        EmptyRegisterCommandException ex = assertThrows(
+                EmptyRegisterCommandException.class,
+                () -> registrar.registerArtifacts(DIRECTORY, "   ", Optional.empty())
+        );
+        assertEquals("Register command is empty: " + "\'   \'", ex.getMessage());
+
+        verify(commandExecutor, never()).execute(any());
+    }
 
     @Test
     @DisplayName("Non-zero exit => throws RuntimeException")

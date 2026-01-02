@@ -27,6 +27,7 @@ import org.slf4j.Logger;
  *
  * @author Ivan Khanas
  */
+@FunctionalInterface
 public interface XmvnCompatController {
 
     /**

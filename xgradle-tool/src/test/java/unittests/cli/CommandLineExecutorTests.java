@@ -74,7 +74,7 @@ class CommandLineExecutorTests {
      * Ensures stderr is not mixed into stdout (current implementation reads only getInputStream()).
      */
     @Test
-    @DisplayName("Does not stream stderr to System.out")
+    @DisplayName("Streams stderr to System.out (redirectErrorStream=true)")
     void doesNotStreamStderrToSystemOut() throws Exception {
         assumePosixShellAvailable();
 
@@ -84,7 +84,7 @@ class CommandLineExecutorTests {
 
         assertAll(
                 () -> assertTrue(out.contains("out"), "stdout must contain 'out'"),
-                () -> assertFalse(out.contains("err"), "stderr must not be present in captured stdout")
+                () -> assertTrue(out.contains("err"), "stderr must be present in captured stdout(redirected)")
         );
     }
 
