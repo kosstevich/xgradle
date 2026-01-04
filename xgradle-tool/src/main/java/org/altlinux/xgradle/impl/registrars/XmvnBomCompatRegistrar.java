@@ -57,6 +57,7 @@ class XmvnBomCompatRegistrar implements Registrar {
      * @param pomProcessor processor for BOM POM files
      * @param commandExecutor executor for command execution
      * @param commandLineParser parser for command-line parsing
+     * @param logger logger instance
      */
     @Inject
     XmvnBomCompatRegistrar(

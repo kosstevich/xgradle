@@ -61,6 +61,7 @@ class DefaultJavadocInstaller implements JavadocInstaller {
      *
      * @param artifactCollector collector for retrieving Javadoc artifacts
      * @param toolConfig configuration for the tool
+     * @param logger logger instance
      */
     @Inject
     DefaultJavadocInstaller(

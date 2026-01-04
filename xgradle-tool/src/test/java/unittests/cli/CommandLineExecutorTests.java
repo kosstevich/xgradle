@@ -71,11 +71,11 @@ class CommandLineExecutorTests {
     }
 
     /**
-     * Ensures stderr is not mixed into stdout (current implementation reads only getInputStream()).
+     * Ensures stderr iS mixed into stdout.
      */
     @Test
     @DisplayName("Streams stderr to System.out (redirectErrorStream=true)")
-    void doesNotStreamStderrToSystemOut() throws Exception {
+    void redirectsStderrToStdout() throws Exception {
         assumePosixShellAvailable();
 
         String out = captureStdout(() ->

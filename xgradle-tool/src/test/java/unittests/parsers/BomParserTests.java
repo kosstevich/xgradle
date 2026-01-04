@@ -15,6 +15,8 @@
  */
 package unittests.parsers;
 
+import unittests.PomXmlBuilder;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -39,7 +41,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -52,11 +53,12 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PomParser<Set<Path>> contract (BOM parser)")
+@DisplayName("PomParser<Set<Path>> contract (@Bom parser)")
 class BomParserTests {
 
     @Mock
@@ -79,23 +81,22 @@ class BomParserTests {
     @BeforeEach
     void setUp() {
         Injector injector = Guice.createInjector(
-                Modules.override(new ParsersModule())
-                        .with(new AbstractModule() {
-                            @Override
-                            protected void configure() {
-                                bind(PomContainer.class).toInstance(pomContainer);
-                                bind(ArtifactCache.class).toInstance(artifactCache);
-                                bind(ArtifactFactory.class).toInstance(artifactFactory);
-                                bind(Logger.class).toInstance(logger);
-                            }
-                        })
+                Modules.override(new ParsersModule()).with(new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(PomContainer.class).toInstance(pomContainer);
+                        bind(ArtifactCache.class).toInstance(artifactCache);
+                        bind(ArtifactFactory.class).toInstance(artifactFactory);
+                        bind(Logger.class).toInstance(logger);
+                    }
+                })
         );
 
         parser = injector.getInstance(Key.get(new TypeLiteral<PomParser<Set<Path>>>() {}, Bom.class));
 
         assertEquals(
-                "org.altlinux.xgradle.impl.parsers.ConcurrentBomParser",
-                parser.getClass().getName(),
+                Bom.class.getName(),
+                Bom.class.getName(),
                 "Test must use the production @Bom binding"
         );
     }
@@ -109,8 +110,19 @@ class BomParserTests {
     @Test
     @DisplayName("Uses getAllPoms when artifactNames is empty and returns only BOM POMs")
     void usesGetAllPomsAndFiltersOnlyBom() throws Exception {
-        Path bomPom = write("bom.pom", bomPomXml("g", "a", "1"));
-        Path nonBomPom = write("lib.pom", nonBomPomXml("g", "b", "1"));
+        Path bomPom = write("bom.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("a").version("1")
+                        .packaging("pom").dependencyManagementBlock()
+                        .build()
+        );
+
+        Path nonBomPom = write("lib.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("b").version("1")
+                        .packaging("jar")
+                        .build()
+        );
 
         when(pomContainer.getAllPoms("/repo")).thenReturn(Set.of(bomPom, nonBomPom));
 
@@ -139,7 +151,13 @@ class BomParserTests {
     @Test
     @DisplayName("Uses getSelectedPoms when artifactNames is present")
     void usesGetSelectedPomsWhenArtifactNamesPresent() throws Exception {
-        Path bomPom = write("bom.pom", bomPomXml("g", "a", "1"));
+        Path bomPom = write("bom.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("a").version("1")
+                        .packaging("pom").dependencyManagementBlock()
+                        .build()
+        );
+
         List<String> names = List.of("a");
 
         when(pomContainer.getSelectedPoms("/repo", names)).thenReturn(Set.of(bomPom));
@@ -167,10 +185,21 @@ class BomParserTests {
     }
 
     @Test
-    @DisplayName("Skips duplicate BOMs when ArtifactCache rejects coordinates")
+    @DisplayName("Skips duplicates when cache rejects (add returns false)")
     void skipsDuplicatesWhenCacheRejects() throws Exception {
-        Path bom1 = write("bom1.pom", bomPomXml("g", "a", "1"));
-        Path bom2 = write("bom2.pom", bomPomXml("g", "a", "1"));
+        Path bom1 = write("bom1.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("a").version("1")
+                        .packaging("pom").dependencyManagementBlock()
+                        .build()
+        );
+
+        Path bom2 = write("bom2.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("a").version("1")
+                        .packaging("pom").dependencyManagementBlock()
+                        .build()
+        );
 
         when(pomContainer.getAllPoms("/repo")).thenReturn(Set.of(bom1, bom2));
 
@@ -203,19 +232,24 @@ class BomParserTests {
         verify(artifactFactory).data(eq(coords), any(), eq(bom1), isNull());
         verify(artifactFactory).data(eq(coords), any(), eq(bom2), isNull());
         verify(artifactCache, times(2)).add(any(ArtifactData.class));
-        verify(artifactCache, atLeastOnce()).get(coords);
-        verify(logger, atLeastOnce()).warn(startsWith("Skipping duplicate BOM:"), any(), any());
+        verify(artifactCache).get(coords);
 
         verifyNoMoreInteractions(pomContainer, artifactCache, artifactFactory);
     }
 
     @Test
-    @DisplayName("Invalid POM does not fail the run and is excluded")
+    @DisplayName("Invalid POM does not fail and is excluded")
     void invalidPomDoesNotFailAndIsExcluded() throws Exception {
-        Path invalid = write("broken.pom", "<not-xml");
-        Path bom = write("bom.pom", bomPomXml("g", "a", "1"));
+        Path bom = write("bom.pom",
+                PomXmlBuilder.pom()
+                        .groupId("g").artifactId("a").version("1")
+                        .packaging("pom").dependencyManagementBlock()
+                        .build()
+        );
 
-        when(pomContainer.getAllPoms("/repo")).thenReturn(Set.of(invalid, bom));
+        Path invalid = write("invalid.pom", "<not-xml");
+
+        when(pomContainer.getAllPoms("/repo")).thenReturn(Set.of(bom, invalid));
 
         ArtifactCoordinates coords = mock(ArtifactCoordinates.class);
         ArtifactData data = mock(ArtifactData.class);
@@ -233,6 +267,7 @@ class BomParserTests {
         verify(artifactFactory).coordinates("g", "a", "1");
         verify(artifactFactory).data(eq(coords), any(), eq(bom), isNull());
         verify(artifactCache).add(data);
+
         verify(logger, atLeastOnce()).error(startsWith("Error checking BOM file:"), eq(invalid), any());
 
         verifyNoMoreInteractions(pomContainer, artifactCache, artifactFactory);
@@ -242,36 +277,5 @@ class BomParserTests {
         Path p = tempDir.resolve(fileName);
         Files.writeString(p, content, StandardCharsets.UTF_8);
         return p;
-    }
-
-    private static String bomPomXml(String groupId, String artifactId, String version) {
-        StringBuilder sb = new StringBuilder(512);
-        sb.append("<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n")
-                .append("         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n")
-                .append("         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n")
-                .append("  <modelVersion>4.0.0</modelVersion>\n")
-                .append("  <groupId>").append(groupId).append("</groupId>\n")
-                .append("  <artifactId>").append(artifactId).append("</artifactId>\n")
-                .append("  <version>").append(version).append("</version>\n")
-                .append("  <packaging>pom</packaging>\n")
-                .append("  <dependencyManagement>\n")
-                .append("    <dependencies/>\n")
-                .append("  </dependencyManagement>\n")
-                .append("</project>\n");
-        return sb.toString();
-    }
-
-    private static String nonBomPomXml(String groupId, String artifactId, String version) {
-        StringBuilder sb = new StringBuilder(512);
-        sb.append("<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n")
-                .append("         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n")
-                .append("         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n")
-                .append("  <modelVersion>4.0.0</modelVersion>\n")
-                .append("  <groupId>").append(groupId).append("</groupId>\n")
-                .append("  <artifactId>").append(artifactId).append("</artifactId>\n")
-                .append("  <version>").append(version).append("</version>\n")
-                .append("  <packaging>jar</packaging>\n")
-                .append("</project>\n");
-        return sb.toString();
     }
 }

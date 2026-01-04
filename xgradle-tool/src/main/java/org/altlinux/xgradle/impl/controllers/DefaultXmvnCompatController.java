@@ -1,45 +1,32 @@
-/*
- * Copyright 2025 BaseALT Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.altlinux.xgradle.impl.controllers;
 
 import com.beust.jcommander.JCommander;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
-import org.altlinux.xgradle.impl.enums.ExitCode;
 import org.altlinux.xgradle.api.controllers.XmvnCompatController;
 import org.altlinux.xgradle.api.registrars.Registrar;
+import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
 
 import org.slf4j.Logger;
 
+import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
+
 /**
  * Controller for managing XMvn compatibility functions for library artifacts.
- * Handles command-line configuration and execution of XMvn registration for libraries.
+ * Validates required CLI parameters and delegates registration to a library {@link Registrar}.
+ * BOM and Javadoc modes are ignored by this controller.
  *
  * @author Ivan Khanas
  */
 @Singleton
 class DefaultXmvnCompatController implements XmvnCompatController {
+
     private final Registrar registrar;
 
     /**
-     * Constructs a new DefaultXmvnCompatController with required dependencies.
+     * Constructs a new library controller.
      *
      * @param registrar registrar for library artifacts
      */
@@ -49,36 +36,33 @@ class DefaultXmvnCompatController implements XmvnCompatController {
     }
 
     /**
-     * Configures and executes XMvn compatibility functions for library artifacts.
-     * Validates parameters and executes registration if requirements are met.
+     * Configures and executes XMvn registration for library artifacts.
+     * If library registration is requested but required parameters are missing, throws a CLI usage exception.
      *
-     * @param jCommander the command-line parser
-     * @param args command-line arguments
+     * @param jCommander command-line parser (not used on success path)
+     * @param args raw command-line args (not used)
      * @param arguments parsed command-line arguments container
-     * @param logger logger for error and information messages
+     * @param logger logger instance (not used on success path)
      */
     @Override
-    public void configureXmvnCompatFunctions(JCommander jCommander, String[] args, CliArgumentsContainer arguments, Logger logger) {
+    public void configureXmvnCompatFunctions(
+            JCommander jCommander,
+            String[] args,
+            CliArgumentsContainer arguments,
+            Logger logger
+    ) {
+        if (!arguments.hasXmvnRegister()
+                || arguments.hasBomRegistration()
+                || arguments.hasJavadocRegistration()) {
+            return;
+        }
 
-            if(arguments.hasXmvnRegister()
-                    && !arguments.hasBomRegistration()
-                    && !arguments.hasJavadocRegistration())
-            {
-                if(arguments.hasSearchingDirectory()) {
-                    try {
-                        registrar.registerArtifacts(
-                                arguments.getSearchingDirectory(),
-                                arguments.getXmvnRegister(),
-                                arguments.getArtifactName()
-                        );
-                    }catch (Exception e) {
-                        logger.error("Error: {}", e.getMessage());
-                        ExitCode.ERROR.exit();
-                    }
-                }else {
-                    logger.error("No searching directory specified");
-                    ExitCode.ERROR.exit();
-                }
-            }
+        require(arguments.hasSearchingDirectory(), "No searching directory specified");
+
+        registrar.registerArtifacts(
+                arguments.getSearchingDirectory(),
+                arguments.getXmvnRegister(),
+                arguments.getArtifactName()
+        );
     }
 }

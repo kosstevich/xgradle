@@ -1,45 +1,31 @@
-/*
- * Copyright 2025 BaseALT Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.altlinux.xgradle.impl.controllers;
 
 import com.beust.jcommander.JCommander;
-
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-import org.altlinux.xgradle.impl.enums.ExitCode;
-import org.altlinux.xgradle.impl.enums.ProcessingType;
 import org.altlinux.xgradle.api.controllers.ArtifactsInstallationController;
 import org.altlinux.xgradle.api.installers.ArtifactsInstaller;
 import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
+import org.altlinux.xgradle.impl.enums.ProcessingType;
 
 import org.slf4j.Logger;
 
+import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
+
 /**
  * Controller for managing Gradle plugin installation process.
- * Handles command-line configuration and validation for plugin installation.
+ * Validates required CLI parameters and delegates installation to {@link ArtifactsInstaller}.
  *
  * @author Ivan Khanas
  */
 @Singleton
 class DefaultPluginsInstallationController implements ArtifactsInstallationController {
+
     private final ArtifactsInstaller pluginArtifactsInstaller;
 
     /**
-     * Constructs a new DefaultPluginsInstallationController with required dependencies.
+     * Constructs a new controller.
      *
      * @param pluginArtifactsInstaller installer for plugin artifacts
      */
@@ -49,52 +35,36 @@ class DefaultPluginsInstallationController implements ArtifactsInstallationContr
     }
 
     /**
-     * Configures and validates plugin artifacts installation based on command-line arguments.
-     * Performs parameter validation and executes installation if all requirements are met.
+     * Configures plugin artifacts installation based on command-line arguments.
+     * If installation is requested but required parameters are missing, throws a CLI usage exception.
      *
-     * @param jCommander the command-line parser
-     * @param args command-line arguments
-     * @param arguments parsed command-line arguments container
-     * @param logger logger for error and information messages
+     * @param jCommander command-line parser (not used on success path)
+     * @param args raw command-line args (not used)
+     * @param arguments parsed CLI arguments container
+     * @param logger logger instance (not used on success path)
      */
     @Override
-    public void configurePluginArtifactsInstallation(JCommander jCommander,
-                                                     String[] args,
-                                                     CliArgumentsContainer arguments,
-                                                     Logger logger)
-    {
-        if(arguments.hasInstallPluginParameter()) {
-            if(arguments.hasSearchingDirectory()) {
-                if(arguments.hasArtifactName()) {
-                    if(arguments.hasPomInstallationDirectory()){
-                        if(arguments.hasJarInstallationDirectory()) {
-                            pluginArtifactsInstaller.install(
-                                    arguments.getSearchingDirectory(),
-                                    arguments.getArtifactName(),
-                                    arguments.getPomInstallationDirectory(),
-                                    arguments.getJarInstallationDirectory(),
-                                    ProcessingType.PLUGINS
-                            );
-                        }else {
-                            logger.error("No Jar installation directory specified");
-                            jCommander.usage();
-                            ExitCode.ERROR.exit();
-                        }
-                    }else {
-                        logger.error("No POM installation directory specified");
-                        jCommander.usage();
-                        ExitCode.ERROR.exit();
-                    }
-                }else {
-                    logger.error("Please specify an artifact name. (--artifact=<artifactName>)");
-                    jCommander.usage();
-                    ExitCode.ERROR.exit();
-                }
-            }else {
-                logger.error("No searching directory specified");
-                jCommander.usage();
-                ExitCode.ERROR.exit();
-            }
+    public void configurePluginArtifactsInstallation(
+            JCommander jCommander,
+            String[] args,
+            CliArgumentsContainer arguments,
+            Logger logger
+    ) {
+        if (!arguments.hasInstallPluginParameter()) {
+            return;
         }
+
+        require(arguments.hasSearchingDirectory(), "No searching directory specified");
+        require(arguments.hasArtifactName(), "Please specify an artifact name. (--artifact=<artifactName>)");
+        require(arguments.hasPomInstallationDirectory(), "No POM installation directory specified");
+        require(arguments.hasJarInstallationDirectory(), "No JAR installation directory specified");
+
+        pluginArtifactsInstaller.install(
+                arguments.getSearchingDirectory(),
+                arguments.getArtifactName(),
+                arguments.getPomInstallationDirectory(),
+                arguments.getJarInstallationDirectory(),
+                ProcessingType.PLUGINS
+        );
     }
 }

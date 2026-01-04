@@ -1,5 +1,7 @@
 package unittests.parsers;
 
+import unittests.PomXmlBuilder;
+
 import com.google.inject.*;
 
 import org.altlinux.xgradle.api.containers.PomContainer;
@@ -14,8 +16,6 @@ import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -60,8 +60,21 @@ public class GradlePluginPomParserTests {
 
     @Test
     void whenArtifactNamesPresentUsesGetAllPomsAndFiltersByFilenamePrefix(@TempDir Path tmp) throws Exception {
-        Path pluginPom = write(tmp.resolve("plug-1.0.pom"), pluginJarPom("org.example", "plug", "1.0", false));
-        Path otherPom = write(tmp.resolve("other-1.0.pom"), pluginJarPom("org.example", "other", "1.0", false));
+        Path pluginPom = PomXmlBuilder.pom()
+                .groupId("org.example")
+                .artifactId("plug")
+                .version("1.0")
+                .packaging("jar")
+                .property("java-gradle-plugin", "true")
+                .writeTo(tmp.resolve("plug-1.0.pom"));
+
+        Path otherPom = PomXmlBuilder.pom()
+                .groupId("org.example")
+                .artifactId("other")
+                .version("1.0")
+                .packaging("jar")
+                .property("java-gradle-plugin", "true")
+                .writeTo(tmp.resolve("other-1.0.pom"));
 
         Path pluginJar = tmp.resolve("plug-1.0.jar");
         Files.write(pluginJar, new byte[]{0});
@@ -80,10 +93,13 @@ public class GradlePluginPomParserTests {
 
     @Test
     void pomPackagingMarkerResolvesDependencyJarAndMapsMarkerPomToDependencyJar(@TempDir Path tmp) throws Exception {
-        Path markerPom = write(tmp.resolve("marker-1.0.pom"), markerPomWithJarDependency(
-                "org.example", "marker", "1.0",
-                "org.dep", "dep", "2.0"
-        ));
+        Path markerPom = PomXmlBuilder.pom()
+                .groupId("org.example")
+                .artifactId("marker")
+                .version("1.0")
+                .packaging("pom")
+                .dep("org.dep", "dep", "2.0", null)
+                .writeTo(tmp.resolve("marker-1.0.pom"));
 
         Path depJar = tmp.resolve("dep-2.0.jar");
         Files.write(depJar, new byte[]{0});
@@ -98,7 +114,14 @@ public class GradlePluginPomParserTests {
 
     @Test
     void nonPomPackagingFallsBackToParentGroupIdAndUsesChildVersionForJarName(@TempDir Path tmp) throws Exception {
-        Path pom = write(tmp.resolve("pp-1.0.pom"), pluginJarPomWithParentGroupId("pp", "1.0", "org.parent"));
+        Path pom = PomXmlBuilder.pom()
+                .parent("org.parent", "parent", "9")
+                .artifactId("pp")
+                .version("1.0")
+                .packaging("jar")
+                .property("java-gradle-plugin", "true")
+                .writeTo(tmp.resolve("pp-1.0.pom"));
+
         Path jar = tmp.resolve("pp-1.0.jar");
         Files.write(jar, new byte[]{0});
 
@@ -108,76 +131,5 @@ public class GradlePluginPomParserTests {
 
         assertEquals(1, result.size());
         assertEquals(jar, result.get(pom.toString()));
-    }
-
-    private static Path write(Path path, String content) throws IOException {
-        Files.write(path, content.getBytes(StandardCharsets.UTF_8));
-        return path;
-    }
-
-    private static String pluginJarPom(String groupId, String artifactId, String version, boolean withParent) {
-        String parent = "";
-        if (withParent) {
-            parent =
-                    "<parent>" +
-                            "<groupId>org.parent</groupId>" +
-                            "<artifactId>parent</artifactId>" +
-                            "<version>9</version>" +
-                            "</parent>";
-        }
-
-        return ""
-                + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\""
-                + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">"
-                + "<modelVersion>4.0.0</modelVersion>"
-                + parent
-                + "<groupId>" + groupId + "</groupId>"
-                + "<artifactId>" + artifactId + "</artifactId>"
-                + "<version>" + version + "</version>"
-                + "<packaging>jar</packaging>"
-                + "<properties><java-gradle-plugin>true</java-gradle-plugin></properties>"
-                + "</project>";
-    }
-
-    private static String pluginJarPomWithParentGroupId(String artifactId, String version, String parentGroupId) {
-        return ""
-                + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\""
-                + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">"
-                + "<modelVersion>4.0.0</modelVersion>"
-                + "<parent>"
-                + "<groupId>" + parentGroupId + "</groupId>"
-                + "<artifactId>parent</artifactId>"
-                + "<version>9</version>"
-                + "</parent>"
-                + "<artifactId>" + artifactId + "</artifactId>"
-                + "<version>" + version + "</version>"
-                + "<packaging>jar</packaging>"
-                + "<properties><java-gradle-plugin>true</java-gradle-plugin></properties>"
-                + "</project>";
-    }
-
-    private static String markerPomWithJarDependency(
-            String groupId, String artifactId, String version,
-            String depGroupId, String depArtifactId, String depVersion
-    ) {
-        return ""
-                + "<project xmlns=\"http://maven.apache.org/POM/4.0.0\""
-                + " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
-                + " xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">"
-                + "<modelVersion>4.0.0</modelVersion>"
-                + "<groupId>" + groupId + "</groupId>"
-                + "<artifactId>" + artifactId + "</artifactId>"
-                + "<version>" + version + "</version>"
-                + "<packaging>pom</packaging>"
-                + "<dependencies>"
-                + "<dependency>"
-                + "<groupId>" + depGroupId + "</groupId>"
-                + "<artifactId>" + depArtifactId + "</artifactId>"
-                + "<version>" + depVersion + "</version>"
-                + "</dependency>"
-                + "</dependencies>"
-                + "</project>";
     }
 }

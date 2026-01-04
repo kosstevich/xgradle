@@ -61,6 +61,7 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
      *
      * @param pomContainer container for POM file management
      * @param artifactCache cache for tracking processed artifacts
+     * @param logger logger instance
      */
     @Inject
     DefaultPluginPomParser(

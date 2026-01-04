@@ -8,7 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 public final class PomXmlBuilder {
 
@@ -24,6 +27,7 @@ public final class PomXmlBuilder {
 
     private final List<Dep> dependencies = new ArrayList<>();
     private final List<Dep> managedDependencies = new ArrayList<>();
+    private final Map<String, String> properties = new LinkedHashMap<>();
 
     public static PomXmlBuilder pom() {
         return new PomXmlBuilder();
@@ -46,6 +50,18 @@ public final class PomXmlBuilder {
 
     public PomXmlBuilder packaging(String packaging) {
         this.packaging = packaging;
+        return this;
+    }
+
+    public PomXmlBuilder property(String key, String value) {
+        this.properties.put(Objects.requireNonNull(key), Objects.requireNonNull(value));
+        return this;
+    }
+
+    public PomXmlBuilder properties(Map<String, String> props) {
+        if (props != null) {
+            props.forEach(this::property);
+        }
         return this;
     }
 
@@ -96,6 +112,16 @@ public final class PomXmlBuilder {
         if (artifactId != null) sb.append("  <artifactId>").append(artifactId).append("</artifactId>\n");
         if (version != null) sb.append("  <version>").append(version).append("</version>\n");
         if (packaging != null) sb.append("  <packaging>").append(packaging).append("</packaging>\n");
+
+        if (!properties.isEmpty()) {
+            sb.append("  <properties>\n");
+            for (Map.Entry<String, String> e : properties.entrySet()) {
+                sb.append("    <").append(e.getKey()).append(">")
+                        .append(e.getValue())
+                        .append("</").append(e.getKey()).append(">\n");
+            }
+            sb.append("  </properties>\n");
+        }
 
         if (includeDependenciesBlock) {
             sb.append("  <dependencies>\n");
@@ -161,9 +187,7 @@ public final class PomXmlBuilder {
     }
 
     private static String spaces(int n) {
-        StringBuilder sb = new StringBuilder(n);
-        for (int k = 0; k < n; k++) sb.append(' ');
-        return sb.toString();
+        return " ".repeat(Math.max(0, n));
     }
 
     private static final class Parent {

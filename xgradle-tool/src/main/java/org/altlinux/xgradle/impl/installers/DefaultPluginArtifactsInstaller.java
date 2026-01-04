@@ -58,6 +58,7 @@ class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
      * Constructs a new DefaultPluginArtifactsInstaller with required dependencies.
      *
      * @param artifactContainer container for artifact management
+     * @param logger logger instance
      */
     @Inject
     DefaultPluginArtifactsInstaller(

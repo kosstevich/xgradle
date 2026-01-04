@@ -3,7 +3,6 @@ package unittests.controllers;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Key;
 import com.google.inject.util.Modules;
 
 import org.altlinux.xgradle.api.controllers.PomRedactionController;
@@ -11,7 +10,6 @@ import org.altlinux.xgradle.api.installers.ArtifactsInstaller;
 import org.altlinux.xgradle.api.installers.JavadocInstaller;
 import org.altlinux.xgradle.api.registrars.Registrar;
 import org.altlinux.xgradle.api.services.PomService;
-
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Bom;
 import org.altlinux.xgradle.impl.bindingannotations.processingtypes.Library;
 import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
@@ -29,54 +27,51 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PomRedactionController contract")
 class PomRedactionControllerTests {
 
-    @Mock
-    ToolConfig toolConfig;
-
-    @Mock
-    PomService pomService;
-
-    @Mock
-    CliArgumentsContainer arguments;
-
-    @Mock
-    ArtifactsInstaller artifactsInstaller;
-
-    @Mock
-    JavadocInstaller javadocInstaller;
-
-    @Mock
-    @SuppressWarnings("rawtypes")
-    Registrar libraryRegistrar;
-
-    @Mock
-    @SuppressWarnings("rawtypes")
-    Registrar bomRegistrar;
-
     private PomRedactionController controller;
+
+    @Mock
+    private PomService pomService;
+
+    @Mock
+    private CliArgumentsContainer cliArgs;
+
+    @Mock
+    private ArtifactsInstaller artifactsInstaller;
+
+    @Mock
+    private JavadocInstaller javadocInstaller;
+
+    @Mock
+    private Registrar libraryRegistrar;
+
+    @Mock
+    private Registrar bomRegistrar;
 
     @BeforeEach
     void setUp() {
+        ToolConfig toolConfig = new ToolConfig(cliArgs);
+
         Injector injector = Guice.createInjector(
                 Modules.override(new ControllersModule())
                         .with(new AbstractModule() {
                             @Override
                             protected void configure() {
-                                bind(ToolConfig.class).toInstance(toolConfig);
                                 bind(PomService.class).toInstance(pomService);
-                                bind(CliArgumentsContainer.class).toInstance(arguments);
+                                bind(CliArgumentsContainer.class).toInstance(cliArgs);
+                                bind(ToolConfig.class).toInstance(toolConfig);
 
                                 bind(ArtifactsInstaller.class).toInstance(artifactsInstaller);
                                 bind(JavadocInstaller.class).toInstance(javadocInstaller);
 
-                                bind(Key.get(Registrar.class, Library.class)).toInstance(libraryRegistrar);
-                                bind(Key.get(Registrar.class, Bom.class)).toInstance(bomRegistrar);
+                                bind(Registrar.class).annotatedWith(Library.class).toInstance(libraryRegistrar);
+                                bind(Registrar.class).annotatedWith(Bom.class).toInstance(bomRegistrar);
                             }
                         })
         );
@@ -86,69 +81,55 @@ class PomRedactionControllerTests {
 
     @Test
     @DisplayName("Is created by Guice")
-    void isCreatedByGuice() {
+    void createdByGuice() {
         assertNotNull(controller);
     }
 
     @Test
     @DisplayName("configure: removeDependencies delegates to PomService.removeDependency for each coord")
     void removeDependenciesDelegatesForEach() {
-        when(arguments.getSearchingDirectory()).thenReturn("/repo");
-        when(toolConfig.isRecursive()).thenReturn(true);
-
-        when(arguments.hasRemoveDependencies()).thenReturn(true);
-        when(arguments.getRemoveDependencies()).thenReturn(List.of("g:a", "x:y:1:test"));
-
-        when(arguments.hasAddDependencies()).thenReturn(false);
-        when(arguments.hasChangeDependencies()).thenReturn(false);
+        when(cliArgs.getSearchingDirectory()).thenReturn("/repo");
+        when(cliArgs.hasRemoveDependencies()).thenReturn(true);
+        when(cliArgs.getRemoveDependencies()).thenReturn(List.of("g:a", "g:b"));
+        when(cliArgs.isRecursive()).thenReturn(true);
 
         controller.configure();
 
-        Path expectedPath = Path.of("/repo");
-        verify(pomService, times(1)).removeDependency(expectedPath, "g:a", true);
-        verify(pomService, times(1)).removeDependency(expectedPath, "x:y:1:test", true);
-
-        verify(pomService, never()).addDependency(any(), anyString(), anyBoolean());
-        verify(pomService, never()).changeDependency(any(), anyString(), anyString(), anyBoolean());
+        Path repo = Path.of("/repo");
+        verify(pomService).removeDependency(repo, "g:a", true);
+        verify(pomService).removeDependency(repo, "g:b", true);
+        verifyNoMoreInteractions(pomService);
     }
 
     @Test
     @DisplayName("configure: addDependencies delegates to PomService.addDependency for each coord")
     void addDependenciesDelegatesForEach() {
-        when(arguments.getSearchingDirectory()).thenReturn("/repo");
-        when(toolConfig.isRecursive()).thenReturn(false);
+        when(cliArgs.getSearchingDirectory()).thenReturn("/repo");
+        when(cliArgs.hasAddDependencies()).thenReturn(true);
+        when(cliArgs.getAddDependencies()).thenReturn(List.of("g:a:1", "g:b:2"));
 
-        when(arguments.hasRemoveDependencies()).thenReturn(false);
-        when(arguments.hasAddDependencies()).thenReturn(true);
-        when(arguments.getAddDependencies()).thenReturn(List.of("g:a:1:compile", "x:y:2:test"));
-
-        when(arguments.hasChangeDependencies()).thenReturn(false);
+        when(cliArgs.isRecursive()).thenReturn(false);
 
         controller.configure();
 
-        Path expectedPath = Path.of("/repo");
-        verify(pomService, times(1)).addDependency(expectedPath, "g:a:1:compile", false);
-        verify(pomService, times(1)).addDependency(expectedPath, "x:y:2:test", false);
-
-        verify(pomService, never()).removeDependency(any(), anyString(), anyBoolean());
-        verify(pomService, never()).changeDependency(any(), anyString(), anyString(), anyBoolean());
+        Path repo = Path.of("/repo");
+        verify(pomService).addDependency(repo, "g:a:1", false);
+        verify(pomService).addDependency(repo, "g:b:2", false);
+        verifyNoMoreInteractions(pomService);
     }
 
     @Test
     @DisplayName("configure: changeDependencies delegates once with pair[0], pair[1]")
     void changeDependenciesDelegatesOnce() {
-        when(arguments.getSearchingDirectory()).thenReturn("/repo");
-        when(toolConfig.isRecursive()).thenReturn(true);
+        when(cliArgs.getSearchingDirectory()).thenReturn("/repo");
+        when(cliArgs.hasChangeDependencies()).thenReturn(true);
+        when(cliArgs.getChangeDependencies()).thenReturn(List.of("g:a:1", "g:b:2"));
 
-        when(arguments.hasRemoveDependencies()).thenReturn(false);
-        when(arguments.hasAddDependencies()).thenReturn(false);
-        when(arguments.hasChangeDependencies()).thenReturn(true);
-        when(arguments.getChangeDependencies()).thenReturn(List.of("g:a:1:test", "g:a:2:test"));
+        when(cliArgs.isRecursive()).thenReturn(true);
 
         controller.configure();
 
-        verify(pomService, times(1)).changeDependency(Path.of("/repo"), "g:a:1:test", "g:a:2:test", true);
-        verify(pomService, never()).addDependency(any(), anyString(), anyBoolean());
-        verify(pomService, never()).removeDependency(any(), anyString(), anyBoolean());
+        verify(pomService).changeDependency(Path.of("/repo"), "g:a:1", "g:b:2", true);
+        verifyNoMoreInteractions(pomService);
     }
 }

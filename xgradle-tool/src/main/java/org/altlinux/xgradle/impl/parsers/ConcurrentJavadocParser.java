@@ -54,6 +54,7 @@ class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
      * Constructs a new ConcurrentJavadocParser with required dependencies.
      *
      * @param pomContainer container for POM file management
+     * @param logger logger instance
      */
     @Inject
     ConcurrentJavadocParser(PomContainer pomContainer, Logger logger) {

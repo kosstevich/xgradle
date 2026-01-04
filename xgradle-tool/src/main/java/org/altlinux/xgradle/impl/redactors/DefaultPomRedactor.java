@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Singleton
 class DefaultPomRedactor implements PomRedactor {
@@ -173,7 +172,7 @@ class DefaultPomRedactor implements PomRedactor {
     private boolean removeFromList(List<Dependency> list, DependencySpec spec) {
         List<Dependency> filtered = list.stream()
                 .filter(d -> !matches(d, spec))
-                .collect(Collectors.toList());
+                .toList();
 
         if (filtered.size() == list.size()) {
             return false;
@@ -186,7 +185,7 @@ class DefaultPomRedactor implements PomRedactor {
     private boolean changeInList(List<Dependency> list, DependencySpec from, DependencySpec to) {
         List<Dependency> targets = list.stream()
                 .filter(d -> matches(d, from))
-                .collect(Collectors.toList());
+                .toList();
 
         if (targets.isEmpty()) {
             return false;

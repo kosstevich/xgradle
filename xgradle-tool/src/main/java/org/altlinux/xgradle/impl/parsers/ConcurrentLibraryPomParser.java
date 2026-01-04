@@ -66,6 +66,7 @@ class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
      * @param pomContainer container for POM file management
      * @param artifactCache cache for tracking processed artifacts
      * @param artifactFactory factory for creating artifact models
+     * @param logger logger instance
      */
     @Inject
     ConcurrentLibraryPomParser(

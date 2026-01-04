@@ -65,6 +65,7 @@ class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
      * @param javadocParser parser for Javadoc artifacts
      * @param pomService service for POM processing operations
      * @param toolConfig configuration for the tool
+     * @param logger logger instance
      */
     @Inject
     DefaultJavadocProcessor(
