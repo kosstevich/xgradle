@@ -24,14 +24,15 @@ import java.util.Set;
 /**
  * Collector for configuration-level dependency metadata in a Gradle build.
  */
-public interface ConfigurationInfoCollector {
+public interface ConfigurationInfoCollector extends Collector<Gradle, Void> {
 
     /**
      * Collects configuration metadata for all projects in Gradle build.
      *
      * @param gradle current Gradle instance
      */
-    void collect(Gradle gradle);
+    @Override
+    Void collect(Gradle gradle);
 
     /**
      * @return mapping dependencyKey -> set of configuration info objects

@@ -18,18 +18,25 @@ package org.altlinux.xgradle.api.maven;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 import org.gradle.api.logging.Logger;
 
+import java.util.List;
+
 /**
- * Finds POM files for requested Maven artifacts.
+ * Locates a POM that corresponds to a Maven artifact.
+ * A finder only resolves which POM file should be used.
+ *
+ * @author Ivan Khanas
  */
 public interface PomFinder {
 
     /**
-     * Searches for the best matching POM for the requested coordinates.
+     * Finds a POM that matches the given Maven coordinates.
      *
-     * @param groupId group identifier
-     * @param artifactId artifact identifier
-     * @param logger logger for diagnostic messages
-     * @return resolved MavenCoordinate or null if not found
+     * @param groupId artifact groupId
+     * @param artifactId artifactId
+     *
+     * @return resolved coordinates (with pomPath set) or null if not found
      */
-    MavenCoordinate findPomForArtifact(String groupId, String artifactId, Logger logger);
+    MavenCoordinate findPomForArtifact(String groupId, String artifactId);
+
+    List<MavenCoordinate> findAllPomsForGroup(String groupId);
 }

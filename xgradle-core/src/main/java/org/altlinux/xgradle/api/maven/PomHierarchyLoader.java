@@ -15,13 +15,12 @@
  */
 package org.altlinux.xgradle.api.maven;
 
-import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.gradle.api.logging.Logger;
+import org.apache.maven.model.Model;
 
 import java.nio.file.Path;
 import java.util.List;
 
 public interface PomHierarchyLoader {
 
-    List<MavenCoordinate> loadHierarchy(Path pomPath, Logger logger);
+    List<Model> loadHierarchy(Path pomPath);
 }

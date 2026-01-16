@@ -29,9 +29,8 @@ public interface ArtifactVerifier {
      * Checks the existence of an artifact.
      *
      * @param coord maven coordinates
-     * @param logger logger for diagnostics errors
      *
      * @return true if artefact exists and false otherwise
      */
-    boolean verifyArtifactExists(MavenCoordinate coord, Logger logger);
+    boolean verifyArtifactExists(MavenCoordinate coord);
 }

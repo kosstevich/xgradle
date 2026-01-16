@@ -103,7 +103,7 @@ public class TestDependencyManagementBlockParser {
     public void parseJunitBom(@TempDir Path tempDir) {
         preparePom("src/test/resources/poms/junit5/junit-bom.pom", tempDir);
 
-        parsedDeps = pomParser.parseDependencyManagement(tempDir.resolve(Path.of("junit-bom.pom")), logger);
+        parsedDeps = pomParser.parseDependencyManagement(tempDir.resolve(Path.of("junit-bom.pom")));
 
         assertFalse(parsedDeps.isEmpty());
 

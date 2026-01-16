@@ -15,8 +15,12 @@
  */
 package org.altlinux.xgradle.impl.plugin;
 
-import org.altlinux.xgradle.impl.handlers.PluginsDependenciesHandler;
-import org.altlinux.xgradle.impl.handlers.ProjectDependenciesHandler;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import org.altlinux.xgradle.api.handlers.PluginsDependenciesHandler;
+import org.altlinux.xgradle.api.handlers.ProjectDependenciesHandler;
+import org.altlinux.xgradle.impl.di.XGradlePluginModule;
+
 import org.altlinux.xgradle.impl.utils.ui.LogoPrinter;
 
 import org.gradle.api.Plugin;
@@ -69,11 +73,14 @@ public class XGradlePlugin implements Plugin<Gradle> {
             LogoPrinter.printCenteredBanner();
         }
 
-        PluginsDependenciesHandler pluginsHandler = new PluginsDependenciesHandler();
-        ProjectDependenciesHandler projectHandler = new ProjectDependenciesHandler();
+        Injector injector = Guice.createInjector(
+                new XGradlePluginModule()
+        );
 
-        gradle.beforeSettings(pluginsHandler::handle);
-        gradle.projectsLoaded(projectHandler::addRepository);
-        gradle.projectsEvaluated(projectHandler::handle);
+        PluginsDependenciesHandler plugins = injector.getInstance(PluginsDependenciesHandler.class);
+        ProjectDependenciesHandler dependencies = injector.getInstance(ProjectDependenciesHandler.class);
+
+        gradle.beforeSettings(plugins::handle);
+        gradle.projectsEvaluated(dependencies::handle);
     }
 }

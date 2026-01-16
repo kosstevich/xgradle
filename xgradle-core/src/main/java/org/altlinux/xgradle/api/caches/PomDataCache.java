@@ -31,12 +31,15 @@ public interface PomDataCache {
     void invalidatePom(String key);
 
     ImmutableList<MavenCoordinate> getDependencyManagement(String key);
+
     void putDependencyManagement(String key, ImmutableList<MavenCoordinate> dependencies);
 
     ImmutableList<MavenCoordinate> getDependencies(String key);
+
     void putDependencies(String key, ImmutableList<MavenCoordinate> dependencies);
 
     Map<String, String> getProperties(String key);
+
     void putProperties(String key, Map<String, String> properties);
 
     void logStats(Logger logger);

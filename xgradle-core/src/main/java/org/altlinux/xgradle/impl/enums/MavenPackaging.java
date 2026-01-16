@@ -15,13 +15,16 @@
  */
 package org.altlinux.xgradle.impl.enums;
 
+import java.util.Locale;
+
 public enum MavenPackaging {
-
     JAR("jar"),
+    POM("pom"),
+    WAR("war"),
+    EAR("ear"),
+    ZIP("zip");
 
-    POM("pom");
-
-   private final String packaging;
+    private final String packaging;
 
     MavenPackaging(String packaging) {
         this.packaging = packaging;
@@ -29,5 +32,18 @@ public enum MavenPackaging {
 
     public String getPackaging() {
         return packaging;
+    }
+
+    public static MavenPackaging fromPackaging(String packaging) {
+        if (packaging == null) {
+            return JAR;
+        }
+        String p = packaging.toLowerCase(Locale.ROOT);
+        for (MavenPackaging mp : values()) {
+            if (mp.packaging.equals(p)) {
+                return mp;
+            }
+        }
+        return JAR;
     }
 }

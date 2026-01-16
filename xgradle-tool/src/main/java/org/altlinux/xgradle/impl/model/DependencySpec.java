@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public final class DependencySpec {
+
     private final String groupId;
     private final String artifactId;
     private final String version;

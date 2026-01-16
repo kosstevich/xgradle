@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+apply(from = rootProject.file("version.gradle.kts"))
+
 plugins {
     `java-gradle-plugin`
     id("org.altlinux.xgradle-publishing-conventions")
@@ -46,8 +49,6 @@ gradlePlugin{
 
 tasks.named<Copy>("processResources") {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    apply(from = rootProject.file("version.gradle.kts"))
 
     from("main/resources/META-INF/gradle-plugins") {
         include("${project.group}.properties")

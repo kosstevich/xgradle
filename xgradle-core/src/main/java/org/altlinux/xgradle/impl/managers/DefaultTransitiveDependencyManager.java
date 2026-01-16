@@ -40,7 +40,7 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * @author Ivan Khanas
  */
 @Singleton
-public class DefaultTransitiveDependencyManager implements TransitiveDependencyManager {
+class DefaultTransitiveDependencyManager implements TransitiveDependencyManager {
     private final PomFinder pomFinder;
     private final PomParser pomParser;
     private final Logger logger;
@@ -56,10 +56,10 @@ public class DefaultTransitiveDependencyManager implements TransitiveDependencyM
      * @param logger Gradle logger instance
      */
     @Inject
-    public DefaultTransitiveDependencyManager(
-            @Named("Default") PomFinder pomFinder,
-            @Named("Default") PomParser pomParser,
-            @Named("Maven") ScopeManager mavenScopeManager,
+    DefaultTransitiveDependencyManager(
+            PomFinder pomFinder,
+            PomParser pomParser,
+            ScopeManager mavenScopeManager,
             Logger logger
             ) {
         this.pomFinder = pomFinder;
@@ -80,7 +80,7 @@ public class DefaultTransitiveDependencyManager implements TransitiveDependencyM
      * @param systemArtifacts Map of initial artifacts (will be modified)
      */
     @Override
-    public void processTransitiveDependencies(Map<String, MavenCoordinate> systemArtifacts) {
+    public void configure(Map<String, MavenCoordinate> systemArtifacts) {
         logger.lifecycle(green(">>> Processing transitive dependencies"));
         Queue<MavenCoordinate> queue = new LinkedList<>(systemArtifacts.values());
 
@@ -89,7 +89,7 @@ public class DefaultTransitiveDependencyManager implements TransitiveDependencyM
             if (current.getPomPath() == null) continue;
 
             List<MavenCoordinate> dependencies = pomParser
-                    .parseDependencies(current.getPomPath(), logger);
+                    .parseDependencies(current.getPomPath());
 
             for (MavenCoordinate dep : dependencies) {
                 String depKey = dep.getGroupId() + ":" + dep.getArtifactId();
@@ -99,8 +99,7 @@ public class DefaultTransitiveDependencyManager implements TransitiveDependencyM
                 MavenCoordinate resolvedDep = systemArtifacts.get(depKey);
                 if (resolvedDep == null) {
                     resolvedDep = pomFinder.findPomForArtifact(
-                            dep.getGroupId(), dep.getArtifactId(), logger
-                    );
+                            dep.getGroupId(), dep.getArtifactId());
                     if (resolvedDep == null) {
                         logger.warn("Skipping not found dependency: {}", depKey);
                         skippedDependencies.add(depKey);

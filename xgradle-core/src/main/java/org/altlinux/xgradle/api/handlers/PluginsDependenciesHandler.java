@@ -6,13 +6,13 @@ import org.gradle.api.initialization.Settings;
  * Handler for configuring plugin resolution and repositories
  * at the settings level.
  */
-@FunctionalInterface
-public interface PluginsDependenciesHandler {
+public interface PluginsDependenciesHandler extends Handler<Settings> {
 
     /**
      * Configures plugin repositories and resolution strategy.
      *
      * @param settings Gradle settings instance
      */
+    @Override
     void handle(Settings settings);
 }

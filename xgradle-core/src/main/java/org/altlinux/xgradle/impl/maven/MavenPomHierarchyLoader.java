@@ -15,6 +15,8 @@
  */
 package org.altlinux.xgradle.impl.maven;
 
+import com.google.inject.Inject;
+import org.altlinux.xgradle.api.maven.PomHierarchyLoader;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.DefaultModelReader;
@@ -46,9 +48,16 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Ivan Khanas
  */
-public class PomHierarchyLoader {
+class MavenPomHierarchyLoader implements PomHierarchyLoader {
     private final Map<String, Model> modelCache = new ConcurrentHashMap<>();
     private final DefaultModelReader modelReader = new DefaultModelReader();
+
+    private final Logger logger;
+
+    @Inject
+    MavenPomHierarchyLoader(Logger logger) {
+        this.logger = logger;
+    }
 
     /**
      * Loads the POM hierarchy starting from the specified file.
@@ -60,20 +69,20 @@ public class PomHierarchyLoader {
      * </p>
      *
      * @param pomPath path to the starting POM file (must exist and be readable)
-     * @param logger Gradle logger for error reporting and debugging
      *
      * @return hierarchical list of POM models in child-to-ancestor order (never null)
      *
      * @throws SecurityException if file read permissions are insufficient
      */
-    public List<Model> loadHierarchy(Path pomPath, Logger logger) {
+    @Override
+    public List<Model> loadHierarchy(Path pomPath) {
         Deque<Model> stack = new ArrayDeque<>();
         Path currentPath = pomPath;
         int depth = 0;
         final int MAX_DEPTH = 10;
 
         while (currentPath != null && depth < MAX_DEPTH) {
-                Model model = loadModel(currentPath, logger);
+                Model model = loadModel(currentPath);
             if (model == null) break;
 
             stack.push(model);
@@ -93,11 +102,10 @@ public class PomHierarchyLoader {
      * </p>
      *
      * @param pomPath filesystem path to the POM file
-     * @param logger logger for error reporting
      *
      * @return parsed POM model, or {@code null} if reading fails
      */
-    private Model loadModel(Path pomPath, Logger logger) {
+    private Model loadModel(Path pomPath) {
         return modelCache.computeIfAbsent(pomPath.toString(), k -> {
             try (InputStream is = Files.newInputStream(pomPath)) {
                 return modelReader.read(is, null);

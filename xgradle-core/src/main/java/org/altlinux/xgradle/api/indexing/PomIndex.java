@@ -16,31 +16,19 @@
 package org.altlinux.xgradle.api.indexing;
 
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.gradle.api.logging.Logger;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Optional;
 
-/**
- * Index for POM files in a repository.
- * <p>
- * Builds an in-memory index of Maven coordinates
- * for a given repository root and set of dependencies.
- */
 public interface PomIndex {
 
-    /**
-     * Builds an index of POM files for the given dependency keys.
-     * <p>
-     * Dependency keys must have the form "groupId:artifactId".
-     *
-     * @param rootDirectory root directory that contains POM files
-     * @param dependencyKeys dependency keys that should be resolved
-     * @param logger logger for diagnostic messages
-     * @return map of dependency key to resolved MavenCoordinate
-     */
-    Map<String, MavenCoordinate> buildIndex(Path rootDirectory,
-                                            Set<String> dependencyKeys,
-                                            Logger logger);
+    void build(Path rootDirectory);
+
+    Optional<MavenCoordinate> find(String groupId, String artifactId);
+
+    List<MavenCoordinate> findAllForGroup(String groupId);
+
+    Map<String, MavenCoordinate> snapshot();
 }

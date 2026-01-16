@@ -6,7 +6,7 @@ import java.util.Set;
 
 public interface TransitiveDependencyManager {
 
-    void processTransitiveDependencies(Map<String, MavenCoordinate> systemArtifacts);
+    void configure(Map<String, MavenCoordinate> systemArtifacts);
 
     Set<String> getSkippedDependencies();
 }

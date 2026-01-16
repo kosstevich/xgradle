@@ -66,4 +66,7 @@ public interface ArtifactConfigurator {
             Map<String, MavenCoordinate> artifacts,
             Map<String, Set<String>> dependencyConfigNames
     );
+
+    Map<String, Set<String>> getConfigurationArtifacts();
+
 }

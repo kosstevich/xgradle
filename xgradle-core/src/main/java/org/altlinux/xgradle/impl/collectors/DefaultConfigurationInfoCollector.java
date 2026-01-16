@@ -15,6 +15,7 @@
  */
 package org.altlinux.xgradle.impl.collectors;
 
+import org.altlinux.xgradle.api.collectors.ConfigurationInfoCollector;
 import org.altlinux.xgradle.impl.model.ConfigurationInfo;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.invocation.Gradle;
@@ -47,7 +48,7 @@ import java.util.*;
  *
  * @author Ivan Khanas
  */
-public class ConfigurationInfoCollector {
+class DefaultConfigurationInfoCollector implements ConfigurationInfoCollector {
     private final Map<String, Set<ConfigurationInfo>> dependencyConfigurations = new HashMap<>();
     private final Map<String, Boolean> testDependencyFlags = new HashMap<>();
     private final Map<String, Set<String>> dependencyConfigNames = new HashMap<>();
@@ -68,8 +69,10 @@ public class ConfigurationInfoCollector {
      * while preserving non-test status if it appears in both test and non-test configurations.
      *
      * @param gradle The Gradle instance representing the build
+     * @return null
      */
-    public void collect(Gradle gradle) {
+    @Override
+    public Void collect(Gradle gradle) {
         gradle.allprojects(project ->
                 project.getConfigurations().all(configuration -> {
                     ConfigurationInfo configInfo = new ConfigurationInfo(configuration);
@@ -85,7 +88,7 @@ public class ConfigurationInfoCollector {
                                     .computeIfAbsent(key, k -> new HashSet<>())
                                     .add(configuration.getName());
 
-                            if (configInfo.isTestConfigutation()) {
+                            if (configInfo.hasTestConfiguration()) {
                                 testDependencyFlags.put(key, true);
                             } else {
                                 testDependencyFlags.putIfAbsent(key, false);
@@ -94,6 +97,7 @@ public class ConfigurationInfoCollector {
                     }
                 })
         );
+        return null;
     }
 
     /**
@@ -105,6 +109,7 @@ public class ConfigurationInfoCollector {
      *
      * @return Map of dependency coordinates to their configuration metadata sets
      */
+    @Override
     public Map<String, Set<ConfigurationInfo>> getDependencyConfigurations() {
         return dependencyConfigurations;
     }
@@ -119,6 +124,7 @@ public class ConfigurationInfoCollector {
      *
      * @return Map of dependency coordinates to their test dependency status
      */
+    @Override
     public Map<String, Boolean> getTestDependencyFlags() {
         return testDependencyFlags;
     }
@@ -131,6 +137,7 @@ public class ConfigurationInfoCollector {
      *
      * @return Map of dependency coordinates to sets of configuration names
      */
+    @Override
     public Map<String, Set<String>> getDependencyConfigNames() {
         return dependencyConfigNames;
     }

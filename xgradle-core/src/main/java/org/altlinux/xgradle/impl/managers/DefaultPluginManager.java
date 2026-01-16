@@ -15,11 +15,14 @@
  */
 package org.altlinux.xgradle.impl.managers;
 
-import org.altlinux.xgradle.impl.handlers.PluginsDependenciesHandler;
-import org.altlinux.xgradle.impl.processors.PluginProcessor;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
+import org.altlinux.xgradle.api.handlers.PluginsDependenciesHandler;
+import org.altlinux.xgradle.api.managers.PluginManager;
+import org.altlinux.xgradle.api.managers.RepositoryManager;
+import org.altlinux.xgradle.api.processors.PluginProcessor;
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.altlinux.xgradle.impl.services.VersionScanner;
 
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
@@ -45,21 +48,17 @@ import java.io.File;
  * @see PluginProcessor
  * @see SystemDepsExtension#getJarsPath()
  */
-public class PluginManager {
+@Singleton
+class DefaultPluginManager  implements PluginManager {
+
     private final RepositoryManager repositoryManager;
     private final PluginProcessor pluginProcessor;
     private final Logger logger;
 
-    /**
-     * Constructs a new PluginManager with the necessary services.
-     *
-     * @param versionScanner the scanner used to find plugin artifacts
-     * @param defaultPomFinder the finder used to locate and parse POM files
-     * @param logger the logger instance for reporting configuration activities
-     */
-    public PluginManager(VersionScanner versionScanner, DefaultPomFinder defaultPomFinder, Logger logger) {
-        this.repositoryManager = new RepositoryManager(logger);
-        this.pluginProcessor = new PluginProcessor(versionScanner, defaultPomFinder, logger);
+    @Inject
+    DefaultPluginManager(RepositoryManager repositoryManager, PluginProcessor pluginProcessor, Logger logger) {
+        this.repositoryManager = repositoryManager;
+        this.pluginProcessor = pluginProcessor;
         this.logger = logger;
     }
 
@@ -78,12 +77,12 @@ public class PluginManager {
      *
      * @param settings the Gradle settings to configure
      */
-    public void handle(Settings settings) {
+    public void configure(Settings settings) {
         File baseDir = new File(SystemDepsExtension.getJarsPath());
 
         if (baseDir.exists() & baseDir.isDirectory()) {
             repositoryManager.configurePluginsRepository(settings, baseDir);
-            pluginProcessor.configurePluginResolution(settings);
+            pluginProcessor.process(settings);
         }else {
             logger.warn("System jars directory does not exist or is not a directory {}", baseDir);
         }

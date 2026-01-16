@@ -15,9 +15,7 @@
  */
 package org.altlinux.xgradle.api.processors;
 
-import org.altlinux.xgradle.api.maven.PomFinder;
 import org.gradle.api.invocation.Gradle;
-import org.gradle.api.logging.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -26,18 +24,26 @@ import java.util.Set;
 /**
  * Processor for BOM (Bill of Materials) dependencies.
  */
-public interface BomProcessor {
+public interface BomProcessor extends Processor<BomProcessor.Context> {
+
+
+    final class Context {
+        private final Gradle gradle;
+        private final Set<String> projectDependencies;
+
+        public Context(Gradle gradle, Set<String> projectDependencies) {
+            this.gradle = gradle;
+            this.projectDependencies = projectDependencies;
+        }
+
+        public Gradle getGradle() { return gradle; }
+        public Set<String> getProjectDependencies() { return projectDependencies; }
+    }
 
     /**
-     * Processes project dependencies and extracts BOM-managed dependencies.
-     *
-     * @param projectDependencies set of dependency keys ("groupId:artifactId")
-     * @param pomFinder service for locating BOM POM files
-     * @param logger Gradle logger
-     *
-     * @return full set of dependencies including those from BOMs
+     * Main entrypoint for BOM processing.
      */
-    Set<String> process(Set<String> projectDependencies, PomFinder pomFinder, Logger logger);
+    void process(Context context);
 
     /**
      * Removes BOM dependencies from Gradle configurations so that

@@ -15,7 +15,11 @@
  */
 package org.altlinux.xgradle.impl.services;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.altlinux.xgradle.api.services.ArtifactVerifier;
+import org.altlinux.xgradle.impl.enums.MavenPackaging;
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
@@ -32,7 +36,8 @@ import java.nio.file.Paths;
  *
  * @author Ivan Khanas
  */
-public class FileSystemArtifactVerifier implements ArtifactVerifier {
+@Singleton
+class FileSystemArtifactVerifier implements ArtifactVerifier {
 
     /**
      * Verifies if an artifact file exists in the local repository structure.
@@ -49,18 +54,17 @@ public class FileSystemArtifactVerifier implements ArtifactVerifier {
      * to always exist as their presence is verified separately.
      *
      * @param coord coordinates of the artifact to verify
-     * @param logger logger for diagnostic messages
      *
      * @return true if the artifact file is found or is a BOM artifact,
      *         false otherwise
      */
     @Override
-    public boolean verifyArtifactExists(MavenCoordinate coord, Logger logger) {
+    public boolean verifyArtifactExists(MavenCoordinate coord) {
         if (coord == null || !coord.isValid()) {
             return false;
         }
 
-        if ("pom".equals(coord.getPackaging())) {
+        if (MavenPackaging.POM.getPackaging().equals(coord.getPackaging())) {
             return true;
         }
 
@@ -83,10 +87,7 @@ public class FileSystemArtifactVerifier implements ArtifactVerifier {
      */
     private boolean checkArtifactExists(Path baseDir, String fileName) {
         Path filePath = baseDir.resolve(fileName);
-        if (Files.exists(filePath) && Files.isRegularFile(filePath)) {
-            return true;
-        }
-        return false;
+        return Files.exists(filePath) && Files.isRegularFile(filePath);
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.altlinux.xgradle.impl.collectors;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import org.altlinux.xgradle.api.collectors.PomFilesCollector;
 import org.gradle.api.logging.Logger;
@@ -17,19 +18,25 @@ import java.util.List;
  * under the specified root directory.
  */
 @Singleton
-public class DefaultPomFilesCollector implements PomFilesCollector {
+class DefaultPomFilesCollector implements PomFilesCollector {
 
     private static final int MAX_SEARCH_DEPTH = 10;
+
+    private final Logger logger;
+
+    @Inject
+    DefaultPomFilesCollector(Logger logger) {
+        this.logger = logger;
+    }
 
     /**
      * Collects all POM files under the given root directory.
      *
      * @param rootDirectory root directory to scan
-     * @param logger logger for diagnostic messages
      * @return list of POM file paths
      */
     @Override
-    public List<Path> collectPomFiles(Path rootDirectory, Logger logger) {
+    public List<Path> collect(Path rootDirectory) {
         List<Path> pomPaths = new ArrayList<>();
 
         if (rootDirectory == null || !Files.isDirectory(rootDirectory)) {

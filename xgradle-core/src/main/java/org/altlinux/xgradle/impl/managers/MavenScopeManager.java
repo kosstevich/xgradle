@@ -15,6 +15,7 @@
  */
 package org.altlinux.xgradle.impl.managers;
 
+import com.google.inject.Singleton;
 import org.altlinux.xgradle.api.managers.ScopeManager;
 import org.altlinux.xgradle.impl.enums.MavenScope;
 
@@ -35,7 +36,8 @@ import java.util.Map;
  *
  * @author Ivan Khanas
  */
-public class MavenScopeManager implements ScopeManager {
+@Singleton
+class MavenScopeManager implements ScopeManager {
 
     private final Map<String, MavenScope> dependencyScopes = new HashMap<>();
 

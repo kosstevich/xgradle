@@ -15,12 +15,14 @@
  */
 package org.altlinux.xgradle.impl.processors;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.altlinux.xgradle.impl.managers.MavenScopeManager;
-import org.altlinux.xgradle.impl.managers.DefaultTransitiveDependencyManager;
+
+import org.altlinux.xgradle.api.managers.TransitiveDependencyManager;
+
+import org.altlinux.xgradle.api.processors.TransitiveProcessor;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.gradle.api.logging.Logger;
+
 import java.util.*;
 
 /**
@@ -35,34 +37,26 @@ import java.util.*;
  *   <li>Propagates test context flags through the dependency tree</li>
  * </ul>
  *
- * <p>Works in conjunction with {@link DefaultTransitiveDependencyManager} to traverse
+ * <p>Works in conjunction with {@link TransitiveDependencyManager} to traverse
  * and process the dependency graph.
  *
  * @author Ivan Khanas
  */
 @Singleton
-public class TransitiveProcessor {
-    private final DefaultTransitiveDependencyManager transitiveManager;
-    private final MavenScopeManager ScopeManager;
+class ScopeAwareTransitiveProcessor implements TransitiveProcessor {
+
+    private final TransitiveDependencyManager transitiveManager;
 
     private final Set<String> mainDependencies = new HashSet<>();
     private final Set<String> testDependencies = new HashSet<>();
-    private final Set<String> testContextDependencies;
 
-    /**
-     * Constructs a transitive dependency processor.
-     *
-     * @param defaultPomFinder Service for locating POM files
-     * @param logger Diagnostic logger
-     * @param testContextDependencies Pre-identified test-scoped dependencies
-     */
-    public TransitiveProcessor(
-            DefaultPomFinder defaultPomFinder,
-            Logger logger,
-            Set<String> testContextDependencies
+    private Set<String> testContextDependencies = Collections.emptySet();
+
+    @Inject
+    ScopeAwareTransitiveProcessor(
+            TransitiveDependencyManager transitiveManager
     ) {
-
-        this.testContextDependencies = testContextDependencies;
+        this.transitiveManager = transitiveManager;
     }
 
     /**
@@ -86,7 +80,7 @@ public class TransitiveProcessor {
             }
         }
 
-        transitiveManager.processTransitiveDependencies(systemArtifacts);
+        transitiveManager.configure(systemArtifacts);
 
         for (Map.Entry<String, MavenCoordinate> entry : systemArtifacts.entrySet()) {
             MavenCoordinate coord = entry.getValue();
@@ -96,6 +90,16 @@ public class TransitiveProcessor {
                 mainDependencies.add(entry.getKey());
             }
         }
+    }
+
+    /**
+     * Sets pre-identified test-scoped dependencies for the next {@link #process} call.
+     */
+    @Override
+    public void setTestContextDependencies(Set<String> testContextDependencies) {
+        this.testContextDependencies = (testContextDependencies == null)
+                ? Collections.emptySet()
+                : testContextDependencies;
     }
 
     /**
@@ -115,16 +119,6 @@ public class TransitiveProcessor {
     public Set<String> getTestDependencies() {
         return testDependencies;
     }
-
-    /**
-     * Gets the scope manager with updated dependency scopes.
-     *
-     * @return scope manager instance containing scope information
-     */
-    public MavenScopeManager getScopeManager() {
-        return mavenScopeManager;
-    }
-
 
     /**
      * Gets dependencies skipped during processing.

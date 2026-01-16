@@ -16,17 +16,14 @@
 package org.altlinux.xgradle.impl.handlers;
 
 import com.google.inject.Inject;
-import org.altlinux.xgradle.api.maven.PomFinder;
-import org.altlinux.xgradle.impl.managers.PluginManager;
+
+import com.google.inject.Singleton;
+import org.altlinux.xgradle.api.handlers.PluginsDependenciesHandler;
+import org.altlinux.xgradle.api.managers.PluginManager;
 
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.impl.services.FileSystemArtifactVerifier;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.altlinux.xgradle.impl.services.VersionScanner;
 
 import org.gradle.api.initialization.Settings;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 
 /**
  * Central handler for managing plugin dependencies in Gradle builds.
@@ -48,31 +45,27 @@ import org.gradle.api.logging.Logging;
  * be confused with regular project dependency management.</p>
  *
  * @see PluginManager
- * @see VersionScanner
  * @see SystemDepsExtension#getJarsPath()
  *
  * @author Ivan Khanas
  */
-public class PluginsDependenciesHandler {
-    private static final Logger logger = Logging.getLogger(PluginsDependenciesHandler.class);
+@Singleton
+class DefaultPluginsDependenciesHandler implements PluginsDependenciesHandler {
+
     private final PluginManager pluginManager;
-    private final PomFinder pomFinder;
 
     /**
      * Constructs a new PluginsDependenciesHandler with default service implementations.
      *
      * <p>Initializes the handler with:
      * <ul>
-     *   <li>A {@link VersionScanner} configured with {@link DefaultPomFinder} and {@link FileSystemArtifactVerifier}</li>
      *   <li>A {@link PluginManager} to handle plugin resolution operations</li>
      * </ul>
      * </p>
      */
     @Inject
-    public PluginsDependenciesHandler(PomFinder pomFinder) {
-        this.pomFinder = pomFinder;
-        VersionScanner versionScanner = new VersionScanner(defaultPomFinder, new FileSystemArtifactVerifier());
-        this.pluginManager = new PluginManager(versionScanner, defaultPomFinder, logger);
+    DefaultPluginsDependenciesHandler(PluginManager pluginManager) {
+        this.pluginManager = pluginManager;
     }
 
     /**
@@ -92,6 +85,6 @@ public class PluginsDependenciesHandler {
      * @param settings the Gradle Settings object used to configure plugin management
      */
     public void handle(Settings settings) {
-        pluginManager.handle(settings);
+        pluginManager.configure(settings);
     }
 }

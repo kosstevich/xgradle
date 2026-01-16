@@ -1,42 +1,40 @@
 package org.altlinux.xgradle.impl.di;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Scope;
-import com.google.inject.Singleton;
-import com.google.inject.name.Names;
-import org.altlinux.xgradle.api.caches.PomDataCache;
-import org.altlinux.xgradle.api.managers.ScopeManager;
-import org.altlinux.xgradle.api.managers.TransitiveDependencyManager;
-import org.altlinux.xgradle.api.maven.PomFinder;
-import org.altlinux.xgradle.api.parsers.PomParser;
-import org.altlinux.xgradle.impl.caches.DefaultPomDataCache;
-import org.altlinux.xgradle.impl.managers.DefaultTransitiveDependencyManager;
-import org.altlinux.xgradle.impl.managers.MavenScopeManager;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.altlinux.xgradle.impl.maven.MavenPomFilenameMatcher;
-import org.altlinux.xgradle.impl.services.DefaultPomParser;
+import org.altlinux.xgradle.impl.caches.CachesModule;
+import org.altlinux.xgradle.impl.collectors.CollectorsModule;
+import org.altlinux.xgradle.impl.configurators.ConfiguratorsModule;
+import org.altlinux.xgradle.impl.handlers.HandlersModule;
+import org.altlinux.xgradle.impl.managers.ManagersModule;
+import org.altlinux.xgradle.impl.maven.MavenModule;
+import org.altlinux.xgradle.impl.processors.ProcessorsModule;
+import org.altlinux.xgradle.impl.resolution.ResolutionModule;
+import org.altlinux.xgradle.impl.services.ServicesModule;
+import org.altlinux.xgradle.impl.utils.logging.LoggingModule;
 
 public class XGradlePluginModule extends AbstractModule {
 
     @Override
     protected void configure() {
 
-        bind(PomDataCache.class).to(DefaultPomDataCache.class);
+        install(new LoggingModule());
 
-        bind(PomParser.class)
-                .annotatedWith(Names.named("Default"))
-                .to(DefaultPomParser.class);
+        install(new CachesModule());
 
-        bind(PomFinder.class)
-                .annotatedWith(Names.named("Default"))
-                .to(DefaultPomFinder.class);
+        install(new CollectorsModule());
 
-        bind(MavenPomFilenameMatcher.class).in(Singleton.class);
+        install(new ProcessorsModule());
 
-        bind(ScopeManager.class)
-                .annotatedWith(Names.named("Maven"))
-                .to(MavenScopeManager.class);
+        install(new ManagersModule());
 
-        bind(TransitiveDependencyManager.class).to(DefaultTransitiveDependencyManager.class);
+        install(new ServicesModule());
+
+        install(new MavenModule());
+
+        install(new HandlersModule());
+
+        install(new ConfiguratorsModule());
+
+        install(new ResolutionModule());
     }
 }

@@ -55,8 +55,8 @@ RUN apt-get remove -y \
 FROM registry.altlinux.org/sisyphus/alt:latest AS runtime
 
 ARG APP_NAME=xgradle
-ARG CORE_NAME=$APP_NAME-core
-ARG CLI_NAME=$APP_NAME-tool
+ARG CORE_NAME=${APP_NAME}-core
+ARG CLI_NAME=${APP_NAME}-tool
 ARG USER_NAME=$APP_NAME
 ARG UID=1000
 ARG GID=1000
@@ -77,7 +77,7 @@ WORKDIR /app
 COPY --from=builder --chown=$USER_NAME:$USER_NAME /app/$CLI_NAME/build/dist/$CLI_NAME /usr/share/java/$APP_NAME/
 COPY --from=builder --chown=$USER_NAME:$USER_NAME /app/$CLI_NAME/build/dist/$CLI_NAME.jar /usr/share/java/$APP_NAME/
 COPY --from=builder --chown=$USER_NAME:$USER_NAME /app/$CORE_NAME/build/dist/$CORE_NAME.jar /usr/share/gradle/$APP_NAME/
-COPY --from=builder --chown=$USER_NAME:$USER_NAME /app/$CORE_NAME/build/dist/$APP_NAME-plugin.gradle /usr/share/gradle/init.d/
+COPY --from=builder --chown=$USER_NAME:$USER_NAME /app/$CORE_NAME/build/dist/${APP_NAME}-plugin.gradle /usr/share/gradle/init.d/
 
 RUN ln -s /usr/share/java/$APP_NAME/$CLI_NAME /usr/bin/$CLI_NAME && \
     chmod +x /usr/share/java/$APP_NAME/$CLI_NAME && \

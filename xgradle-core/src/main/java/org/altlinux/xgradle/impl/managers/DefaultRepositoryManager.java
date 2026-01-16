@@ -15,6 +15,9 @@
  */
 package org.altlinux.xgradle.impl.managers;
 
+import com.google.inject.Inject;
+import org.altlinux.xgradle.api.managers.Manager;
+import org.altlinux.xgradle.api.managers.RepositoryManager;
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
 
 import org.gradle.api.GradleException;
@@ -46,26 +49,17 @@ import java.util.UUID;
  *
  * @author Ivan Khanas
  */
-public class RepositoryManager {
-    private static final String JARS_PATH = SystemDepsExtension.getJarsPath();
-    private Logger logger;
+class DefaultRepositoryManager implements RepositoryManager {
+
+    private final Logger logger;
 
     /**
      * Constructs a RepositoryManager with the specified logger.
      *
      * @param logger logger to output lifecycle and error messages
      */
-    public RepositoryManager(Logger logger) {
-        this.logger = logger;
-    }
-
-
-    /**
-     * Sets the logger instance used by this manager.
-     *
-     * @param logger a Gradle logger
-     */
-    public void setLogger(Logger logger) {
+    @Inject
+    DefaultRepositoryManager(Logger logger) {
         this.logger = logger;
     }
 
@@ -104,11 +98,10 @@ public class RepositoryManager {
      *
      * @param repos the Gradle repository handler used to register repositories
      */
-    public void configureDependenciesRepository(RepositoryHandler repos) {
-        File libDir = new File(JARS_PATH);
+    public void configureDependenciesRepository(RepositoryHandler repos, File libDir) {
         validateDirectory(libDir);
 
-        String repoName = "SystemDepsRepo-" + UUID.randomUUID();
+        String repoName = "SystemDepsRepo" + UUID.randomUUID();
         FlatDirectoryArtifactRepository flatRepo = createFlatRepository(repos, repoName, libDir);
 
         repos.remove(flatRepo);
@@ -124,7 +117,7 @@ public class RepositoryManager {
      *
      * @return a list of directories including the base directory and its subdirectories
      */
-    public List<File> scanDirectories(File baseDir) {
+    private List<File> scanDirectories(File baseDir) {
         List<File> allDirs = new ArrayList<>(List.of(baseDir));
         try {
             Files.walk(baseDir.toPath(), 3)

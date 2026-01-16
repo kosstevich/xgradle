@@ -15,6 +15,8 @@
  */
 package org.altlinux.xgradle.impl.maven;
 
+import com.google.inject.Singleton;
+import org.altlinux.xgradle.api.maven.PomFilenameMatcher;
 import org.gradle.util.internal.VersionNumber;
 
 import java.nio.file.Path;
@@ -35,7 +37,8 @@ import java.util.Set;
  *
  * @author Ivan Khanas
  */
-public class MavenPomFilenameMatcher {
+@Singleton
+class MavenPomFilenameMatcher implements PomFilenameMatcher {
 
     /**
      * Checks whether the given path corresponds to a candidate POM file
@@ -55,7 +58,8 @@ public class MavenPomFilenameMatcher {
      * @return {@code true} if filename matches one of the supported patterns,
      *         {@code false} otherwise
      */
-    boolean matches(Path path, String variant, String artifactId) {
+    @Override
+    public boolean matches(Path path, String variant, String artifactId) {
         String fileName = path.getFileName().toString();
         if (!fileName.endsWith(".pom")) {
             return false;
@@ -91,7 +95,8 @@ public class MavenPomFilenameMatcher {
      *
      * @return set of possible filename base variants
      */
-    Set<String> generateNameVariants(String groupId, String artifactId) {
+    @Override
+    public Set<String> generateNameVariants(String groupId, String artifactId) {
         Set<String> variants = new HashSet<>();
         variants.add(artifactId);
 

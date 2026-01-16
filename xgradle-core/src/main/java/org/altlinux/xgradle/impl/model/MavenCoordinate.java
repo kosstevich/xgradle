@@ -160,12 +160,21 @@ public class MavenCoordinate {
     }
 
     /**
-     * Returns the scope of the artifact.
+     * Returns the scope of the artifact as enum.
      *
-     * @return scope string
+     * @return scope enum value, never null
      */
     public MavenScope getScope() {
         return MavenScope.fromScope(scope);
+    }
+
+    /**
+     * Returns the raw scope string value.
+     *
+     * @return raw scope string, may be null
+     */
+    public String getScopeValue() {
+        return scope;
     }
 
     /**
@@ -175,6 +184,15 @@ public class MavenCoordinate {
      */
     public void setScope(String scope) {
         this.scope = scope;
+    }
+
+    /**
+     * Sets the scope of the artifact from enum value.
+     *
+     * @param scope new scope enum value
+     */
+    public void setScope(MavenScope scope) {
+        this.scope = scope == null ? null : scope.getScope();
     }
 
     /**

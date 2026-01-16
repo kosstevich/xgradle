@@ -16,58 +16,53 @@
 package org.altlinux.xgradle.api.parsers;
 
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-
 import org.gradle.api.logging.Logger;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Interface for pom parsing classes.
+ * Parses Maven POM files and extracts coordinates and dependencies.
  *
  * @author Ivan Khanas
  */
 public interface PomParser {
-    /**
-     * Method for determining the appropriate pom file for a dependency.
-     *
-     * @param pomPath path to Pom file to be parsed
-     * @param logger logger for diagnostic messages
-     *
-     * @return valid MavenCoordinate
-     */
-    MavenCoordinate parsePom(Path pomPath, Logger logger);
 
     /**
-     * Method for parsing dependencyManagement block of a pom file to collect
-     * a valid Maven coordinates of each dependency.
+     * Parses artifact coordinates from a POM file.
      *
-     * @param pomPath path to the Pom file whose dependencyManagement block will be parsed
-     * @param logger logger for diagnostic messages
+     * @param pomPath path to the POM file
      *
-     * @return ArrayList of valid MavenCoordinates
+     * @return parsed coordinates or null on failure
      */
-    ArrayList<MavenCoordinate> parseDependencyManagement(Path pomPath, Logger logger);
+    MavenCoordinate parsePom(Path pomPath);
 
     /**
-     * Method for parsing dependencies block of a pom file to collect
-     * a valid Maven coordinates of each dependency.
+     * Parses dependencies from the dependencies section.
      *
-     * @param pomPath path to the Pom file whose dependencies block will be parsed
-     * @param logger logger for diagnostic messages
+     * @param pomPath path to the POM file
      *
-     * @return ArrayList of valid MavenCoordinates
+     * @return list of dependency coordinates (may be empty)
      */
-    ArrayList<MavenCoordinate> parseDependencies(Path pomPath, Logger logger);
+    List<MavenCoordinate> parseDependencies(Path pomPath);
 
     /**
-     * Method for parsing properties of a Pom file.
+     * Parses dependencies from dependencyManagement section.
      *
-     * @param pomPath path to the Pom file whose properties block will be parsed
-     * @param logger logger for diagnostic messages
+     * @param pomPath path to the POM file
      *
-     * @return Map of dependencies names and versions
+     * @return list of managed dependency coordinates (may be empty)
      */
-    Map<String, String> parseProperties(Path pomPath, Logger logger);
+    List<MavenCoordinate> parseDependencyManagement(Path pomPath);
+
+    /**
+     * Parses properties section of a POM file.
+     *
+     * @param pomPath path to the POM file
+     *
+     * @return map of property names to values
+     */
+    Map<String, String> parseProperties(Path pomPath);
+
 }

@@ -15,11 +15,15 @@
  */
 package org.altlinux.xgradle.impl.services;
 
-import org.altlinux.xgradle.api.services.ArtifactVerifier;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.altlinux.xgradle.impl.model.MavenCoordinate;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
-import org.gradle.api.logging.Logger;
+import org.altlinux.xgradle.api.maven.PomFinder;
+import org.altlinux.xgradle.api.parsers.PomParser;
+import org.altlinux.xgradle.api.services.ArtifactVerifier;
+import org.altlinux.xgradle.api.services.VersionScanner;
+import org.altlinux.xgradle.impl.enums.MavenScope;
+import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
 import java.util.*;
 
@@ -38,20 +42,24 @@ import java.util.*;
  *
  * @author Ivan Khanas
  */
-public class VersionScanner {
+@Singleton
+class DependencyVersionScanner implements VersionScanner {
 
-    private final DefaultPomFinder defaultPomFinder;
+    private final PomFinder pomFinder;
+    private final PomParser pomParser;
     private final ArtifactVerifier artifactVerifier;
     private final Set<String> notFoundDependencies = new HashSet<>();
 
     /**
      * Constructs a VersionScanner with required service components.
      *
-     * @param defaultPomFinder Service for locating POM files in the system
+     * @param pomFinder Service for locating POM files in the system
      * @param artifactVerifier Service for verifying artifact existence
      */
-    public VersionScanner(DefaultPomFinder defaultPomFinder, ArtifactVerifier artifactVerifier) {
-        this.defaultPomFinder = defaultPomFinder;
+    @Inject
+    DependencyVersionScanner(PomFinder pomFinder, ArtifactVerifier artifactVerifier, PomParser pomParser) {
+        this.pomFinder = pomFinder;
+        this.pomParser = pomParser;
         this.artifactVerifier = artifactVerifier;
     }
 
@@ -67,11 +75,10 @@ public class VersionScanner {
      * Unresolved dependencies are tracked internally and accessible via {@link #getNotFoundDependencies()}.
      *
      * @param projectDependencies  Set of dependency identifiers in "groupId:artifactId" format
-     * @param logger Gradle logger for diagnostic messages
      *
      * @return Map linking dependency identifiers to resolved Maven coordinates
      */
-    public Map<String, MavenCoordinate> scanSystemArtifacts(Set<String> projectDependencies, Logger logger) {
+    public Map<String, MavenCoordinate> scanSystemArtifacts(Set<String> projectDependencies) {
         notFoundDependencies.clear();
         Map<String, MavenCoordinate> versions = new HashMap<>();
         Set<String> processedDependencies = new HashSet<>();
@@ -84,14 +91,14 @@ public class VersionScanner {
             if (versions.containsKey(dep)) continue;
 
             if (dep.endsWith(".gradle.plugin")) {
-                resolveGradlePlugin(dep, versions, logger);
+                resolveGradlePlugin(dep, versions);
             } else {
-                resolveRegularDependency(dep, versions, logger);
+                resolveRegularDependency(dep, versions);
             }
 
             MavenCoordinate coord = versions.get(dep);
             if (coord != null && coord.getPomPath() != null) {
-                scanProvidedDependencies(coord, dependencyQueue, versions, logger);
+                scanProvidedDependencies(coord, dependencyQueue, versions);
             }
         }
         return versions;
@@ -118,17 +125,15 @@ public class VersionScanner {
      * @param parentCoord     Parent artifact coordinates containing the POM to scan
      * @param dependencyQueue Queue of dependencies pending resolution
      * @param versions        Map of already resolved dependencies
-     * @param logger          Gradle logger for diagnostic messages
      */
     private void scanProvidedDependencies(MavenCoordinate parentCoord,
                                           Queue<String> dependencyQueue,
-                                          Map<String, MavenCoordinate> versions,
-                                          Logger logger) {
-        List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
-                .parseDependencies(parentCoord.getPomPath(), logger);
+                                          Map<String, MavenCoordinate> versions) {
+        List<MavenCoordinate> dependencies = pomParser
+                .parseDependencies(parentCoord.getPomPath());
 
         for (MavenCoordinate dep : dependencies) {
-            if ("provided".equals(dep.getScope()) || "runtime".equals(dep.getScope())) {
+            if (MavenScope.PROVIDED.equals(dep.getScope()) || MavenScope.RUNTIME.equals(dep.getScope())) {
                 String depKey = dep.getGroupId() + ":" + dep.getArtifactId();
                 if (!versions.containsKey(depKey) && !dependencyQueue.contains(depKey)) {
                     dependencyQueue.add(depKey);
@@ -150,14 +155,13 @@ public class VersionScanner {
      *
      * @param pluginDep Plugin dependency identifier in "id:gradle.plugin" format
      * @param versions Map to store resolved dependencies
-     * @param logger Gradle logger for diagnostic messages
      */
-    private void resolveGradlePlugin(String pluginDep, Map<String, MavenCoordinate> versions, Logger logger) {
+    private void resolveGradlePlugin(String pluginDep, Map<String, MavenCoordinate> versions) {
         String[] parts = pluginDep.split(":");
         if (parts.length != 2) return;
 
-        MavenCoordinate pom = findPluginArtifact(parts[0], logger);
-        if (pom != null && artifactVerifier.verifyArtifactExists(pom, logger)) {
+        MavenCoordinate pom = findPluginArtifact(parts[0]);
+        if (pom != null && artifactVerifier.verifyArtifactExists(pom)) {
             versions.put(pluginDep, pom);
         }
     }
@@ -176,9 +180,8 @@ public class VersionScanner {
      *
      * @param dep Dependency identifier in "groupId:artifactId" format
      * @param versions Map to store resolved dependencies
-     * @param logger Gradle logger for diagnostic messages
      */
-    private void resolveRegularDependency(String dep, Map<String, MavenCoordinate> versions, Logger logger) {
+    private void resolveRegularDependency(String dep, Map<String, MavenCoordinate> versions) {
         String[] parts = dep.split(":");
         if (parts.length < 2) return;
 
@@ -187,12 +190,12 @@ public class VersionScanner {
 
         if (hasPlaceholder(groupId) || hasPlaceholder(artifactId)) return;
 
-        MavenCoordinate pom = defaultPomFinder.findPomForArtifact(groupId, artifactId, logger);
+        MavenCoordinate pom = pomFinder.findPomForArtifact(groupId, artifactId);
         if (pom == null) {
             notFoundDependencies.add(dep);
             return;
         }
-        if (!artifactVerifier.verifyArtifactExists(pom, logger)) {
+        if (!artifactVerifier.verifyArtifactExists(pom)) {
             notFoundDependencies.add(dep);
             return;
         }
@@ -224,11 +227,11 @@ public class VersionScanner {
      * </ul>
      *
      * @param pluginId Gradle plugin ID (e.g., "org.example.myplugin")
-     * @param logger Gradle logger for diagnostic messages
      *
      * @return MavenCoordinate of the resolved plugin artifact, or null if not found
      */
-    public MavenCoordinate findPluginArtifact(String pluginId, Logger logger) {
+    @Override
+    public MavenCoordinate findPluginArtifact(String pluginId) {
         String baseName = pluginId.contains(".") ?
                 pluginId.substring(pluginId.lastIndexOf('.') + 1) : pluginId;
 
@@ -240,8 +243,8 @@ public class VersionScanner {
         };
 
         for (String artifactId : artifactIds) {
-            MavenCoordinate coord = defaultPomFinder.findPomForArtifact(pluginId, artifactId, logger);
-            if (coord != null && artifactVerifier.verifyArtifactExists(coord, logger)) {
+            MavenCoordinate coord = pomFinder.findPomForArtifact(pluginId, artifactId);
+            if (coord != null && artifactVerifier.verifyArtifactExists(coord)) {
                 return coord;
             }
         }
@@ -254,14 +257,14 @@ public class VersionScanner {
             };
 
             for (String artifactId : extendedArtifactIds) {
-                MavenCoordinate coord = defaultPomFinder.findPomForArtifact(pluginId, artifactId, logger);
-                if (coord != null && artifactVerifier.verifyArtifactExists(coord, logger)) {
+                MavenCoordinate coord = pomFinder.findPomForArtifact(pluginId, artifactId);
+                if (coord != null && artifactVerifier.verifyArtifactExists(coord)) {
                     return coord;
                 }
             }
         }
 
-        return findMainArtifactForGroup(pluginId, logger);
+        return findMainArtifactForGroup(pluginId);
     }
 
     /**
@@ -275,12 +278,10 @@ public class VersionScanner {
      * </ul>
      *
      * @param groupId Maven group ID to search for
-     * @param logger Gradle logger for diagnostic messages
-     *
      * @return MavenCoordinate of the main Gradle plugin artifact, or null if not found
      */
-    private MavenCoordinate findMainArtifactForGroup(String groupId, Logger logger) {
-        ArrayList<MavenCoordinate> candidates = defaultPomFinder.findAllPomsForGroup(groupId, logger);
+    private MavenCoordinate findMainArtifactForGroup(String groupId) {
+        List<MavenCoordinate> candidates = pomFinder.findAllPomsForGroup(groupId);
         return candidates.stream()
                 .filter(coord -> coord.getArtifactId().contains("gradle") ||
                         coord.getArtifactId().contains("plugin"))

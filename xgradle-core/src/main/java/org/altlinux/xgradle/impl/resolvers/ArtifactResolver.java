@@ -15,10 +15,9 @@
  */
 package org.altlinux.xgradle.impl.resolvers;
 
+import org.altlinux.xgradle.api.services.VersionScanner;
+import org.altlinux.xgradle.impl.enums.MavenScope;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.services.VersionScanner;
-
-import org.gradle.api.logging.Logger;
 
 import java.util.Map;
 import java.util.Set;
@@ -62,10 +61,9 @@ public class ArtifactResolver {
      * Locates system artifacts for requested dependencies.
      *
      * @param dependencies Dependency keys to resolve (format: "group:artifact")
-     * @param logger For progress reporting and diagnostics
      */
-    public void resolve(Set<String> dependencies, Logger logger) {
-        systemArtifacts = versionScanner.scanSystemArtifacts(dependencies, logger);
+    public void resolve(Set<String> dependencies) {
+        systemArtifacts = versionScanner.scanSystemArtifacts(dependencies);
     }
 
     /**
@@ -77,7 +75,7 @@ public class ArtifactResolver {
      */
     public void filter() {
         systemArtifacts.entrySet().removeIf(e ->
-                "test".equals(e.getValue().getScope()) || e.getValue().isBom()
+                MavenScope.TEST.equals(e.getValue().getScope()) || e.getValue().isBom()
         );
     }
 

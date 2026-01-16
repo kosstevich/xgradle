@@ -1,22 +1,10 @@
-/*
- * Copyright 2025 BaseALT Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.altlinux.xgradle.impl.enums;
 
-import java.util.Locale;
-
+/**
+ * Maven dependency scope.
+ *
+ * @author Ivan Khanas
+ */
 public enum MavenScope {
 
     COMPILE("compile"),
@@ -34,29 +22,26 @@ public enum MavenScope {
     }
 
     /**
-     * Returns the canonical string representation of this scope.
+     * Returns Maven scope string value.
      *
-     * @return scope value as used in POM files
-     *
-     **/
+     * @return scope value
+     */
     public String getScope() {
         return scope;
     }
 
     /**
-     * Parses a scope string into MavenScope.
-     * Unknown or empty values are mapped to COMPILE.
+     * Converts raw scope string to enum.
      *
-     * @param value scope string from POM (may be null)
-     * @return resolved scope, never null
+     * @param value raw scope value from POM (may be null/blank)
+     * @return parsed scope or COMPILE if value is missing/unknown
      */
     public static MavenScope fromScope(String value) {
         if (value == null || value.isBlank()) {
             return COMPILE;
         }
 
-        String normalized = value.trim().toLowerCase(Locale.ROOT);
-
+        String normalized = value.trim().toLowerCase();
         for (MavenScope s : values()) {
             if (s.scope.equals(normalized)) {
                 return s;

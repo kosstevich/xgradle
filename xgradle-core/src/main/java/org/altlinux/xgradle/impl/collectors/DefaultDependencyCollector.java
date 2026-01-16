@@ -43,7 +43,7 @@ import java.util.*;
  *
  * @author Ivan Knanas
  */
-public class DefaultDependencyCollector implements DependencyCollector {
+class DefaultDependencyCollector implements DependencyCollector {
     private final Map<String, Set<String>> requestedVersions = new HashMap<>();
     private final Set<String> dependencies = new LinkedHashSet<>();
 
@@ -68,6 +68,7 @@ public class DefaultDependencyCollector implements DependencyCollector {
      *
      * @return a set of collected dependency keys in the format {@code group:artifact}
      */
+    @Override
     public Set<String> collect(Gradle gradle) {
         gradle.allprojects(p -> p.getConfigurations().all(cfg -> {
             for (Dependency d : cfg.getDependencies()) {

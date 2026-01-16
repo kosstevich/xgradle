@@ -25,14 +25,17 @@ import java.util.Set;
  * Processor that categorizes dependencies into main/test scopes
  * based on transitive dependency graph.
  */
-public interface TransitiveProcessor {
+public interface TransitiveProcessor extends Processor<Map<String, MavenCoordinate>> {
 
     /**
      * Processes transitive dependencies and categorizes them into main/test contexts.
      *
      * @param systemArtifacts map of system artifacts (key: "groupId:artifactId")
      */
+    @Override
     void process(Map<String, MavenCoordinate> systemArtifacts);
+
+    default void setTestContextDependencies(Set<String> testContextDependencies) {}
 
     /**
      * @return dependencies belonging to main context
@@ -43,11 +46,6 @@ public interface TransitiveProcessor {
      * @return dependencies belonging to test context
      */
     Set<String> getTestDependencies();
-
-    /**
-     * @return effective scope manager used during processing
-     */
-    ScopeManager getScopeManager();
 
     /**
      * @return skipped dependencies reported by underlying manager

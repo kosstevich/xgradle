@@ -16,9 +16,12 @@
 package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import org.altlinux.xgradle.api.maven.PomFinder;
+import org.altlinux.xgradle.api.parsers.PomParser;
+import org.altlinux.xgradle.api.processors.PluginProcessor;
+import org.altlinux.xgradle.api.services.VersionScanner;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-import org.altlinux.xgradle.impl.maven.DefaultPomFinder;
-import org.altlinux.xgradle.impl.services.VersionScanner;
 import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
 import org.gradle.plugin.management.PluginResolveDetails;
@@ -46,27 +49,23 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * plugin IDs without dots, as these are typically resolved through Gradle's built-in mechanisms.</p>
  *
  * @see VersionScanner
- * @see DefaultPomFinder
+ * @see PomFinder
  *
  * @author Ivan Khanas
  */
-public class PluginProcessor {
+@Singleton
+class DefaultPluginProcessor implements PluginProcessor {
+
     private final VersionScanner versionScanner;
-    private final DefaultPomFinder defaultPomFinder;
     private final Logger logger;
+    private final PomParser pomParser;
+
     private final Set<String> processedBoms = new HashSet<>();
 
-    /**
-     * Constructs a new PluginProcessor with the necessary services.
-     *
-     * @param versionScanner the scanner used to find plugin artifacts in local repositories
-     * @param defaultPomFinder the finder used to locate and parse POM files for dependency information
-     * @param logger the logger instance for reporting resolution activities
-     */
     @Inject
-    public PluginProcessor(VersionScanner versionScanner, DefaultPomFinder defaultPomFinder, Logger logger) {
+    DefaultPluginProcessor(VersionScanner versionScanner, PomFinder pomFinder, PomParser pomParser, Logger logger) {
         this.versionScanner = versionScanner;
-        this.defaultPomFinder = defaultPomFinder;
+        this.pomParser = pomParser;
         this.logger = logger;
     }
 
@@ -79,7 +78,8 @@ public class PluginProcessor {
      *
      * @param settings the Gradle settings to configure
      */
-    public void configurePluginResolution(Settings settings) {
+    @Override
+    public void process(Settings settings) {
         settings.getPluginManagement().getResolutionStrategy().eachPlugin(this::processPlugin);
     }
 
@@ -103,7 +103,7 @@ public class PluginProcessor {
             return;
         }
 
-        MavenCoordinate coord = versionScanner.findPluginArtifact(pluginId, logger);
+        MavenCoordinate coord = versionScanner.findPluginArtifact(pluginId);
         if (coord != null && coord.isValid()) {
             if (coord.isBom()) {
                 processBomPlugin(coord, requested);
@@ -137,8 +137,8 @@ public class PluginProcessor {
         }
         processedBoms.add(bomKey);
 
-        List<MavenCoordinate> dependencies = defaultPomFinder.getPomParser()
-                .parseDependencies(bomCoord.getPomPath(), logger);
+        List<MavenCoordinate> dependencies = pomParser
+                .parseDependencies(bomCoord.getPomPath());
 
         for (MavenCoordinate dep : dependencies) {
             if (dep.isBom()) {

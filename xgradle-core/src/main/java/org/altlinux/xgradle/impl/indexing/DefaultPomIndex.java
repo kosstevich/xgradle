@@ -19,133 +19,131 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.altlinux.xgradle.api.collectors.PomFilesCollector;
-import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.api.indexing.PomIndex;
+import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
 import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
-
 import org.gradle.util.internal.VersionNumber;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-/**
- * Default implementation of PomIndex.
- * <p>
- * Collects all POM files under the given root directory,
- * parses them in parallel and builds a map from
- * "groupId:artifactId" to MavenCoordinate.
- */
 @Singleton
-public class DefaultPomIndex implements PomIndex {
-
-    private static final Logger logger = Logging.getLogger(DefaultPomIndex.class);
+class DefaultPomIndex implements PomIndex {
 
     private final PomFilesCollector pomFilesCollector;
     private final PomParser pomParser;
+    private final Logger logger;
 
-    /**
-     * Creates a new DefaultPomIndex.
-     *
-     * @param pomFilesCollector collector that scans repository for POM files
-     * @param pomParser parser used to read POM contents
-     */
+    private volatile Map<String, MavenCoordinate> latestByGa = Collections.emptyMap();
+    private volatile Map<String, List<MavenCoordinate>> byGroup = Collections.emptyMap();
+
     @Inject
-    public DefaultPomIndex(PomFilesCollector pomFilesCollector, PomParser pomParser) {
+    DefaultPomIndex(PomFilesCollector pomFilesCollector, PomParser pomParser, Logger logger) {
         this.pomFilesCollector = pomFilesCollector;
         this.pomParser = pomParser;
+        this.logger = logger;
     }
 
-    /**
-     * Builds an index of Maven coordinates for the given dependency keys.
-     * <p>
-     * POM files are collected once and parsed in parallel.
-     *
-     * @param rootDirectory root directory that contains POM files
-     * @param dependencyKeys dependency keys to resolve (groupId:artifactId)
-     * @param logger logger for diagnostic messages
-     * @return map of dependency key to resolved MavenCoordinate
-     */
     @Override
-    public Map<String, MavenCoordinate> buildIndex(Path rootDirectory,
-                                                   Set<String> dependencyKeys,
-                                                   Logger logger) {
-        if (dependencyKeys == null || dependencyKeys.isEmpty()) {
-            return Collections.emptyMap();
+    public void build(Path rootDirectory) {
+        if (rootDirectory == null || !Files.isDirectory(rootDirectory)) {
+            logger.lifecycle("POM root directory is not valid: {}", rootDirectory);
+            latestByGa = Collections.emptyMap();
+            byGroup = Collections.emptyMap();
+            return;
         }
 
-        List<Path> pomPaths = pomFilesCollector.collectPomFiles(rootDirectory, logger);
-        if (pomPaths.isEmpty()) {
-            logger.lifecycle("No POM files found under {}", rootDirectory);
-            return Collections.emptyMap();
-        }
+        List<Path> pomFiles = pomFilesCollector.collect(rootDirectory);
 
-        Set<String> keys = new HashSet<>(dependencyKeys);
+        Map<String, MavenCoordinate> latest = new HashMap<>();
+        Map<String, List<MavenCoordinate>> groups = new HashMap<>();
 
-        Map<String, List<MavenCoordinate>> grouped = pomPaths
-                .parallelStream()
-                .map(path -> pomParser.parsePom(path, logger))
-                .filter(Objects::nonNull)
-                .filter(MavenCoordinate::isValid)
-                .filter(coord -> keys.contains(toKey(coord)))
-                .collect(Collectors.groupingBy(DefaultPomIndex::toKey));
-
-        Map<String, MavenCoordinate> result = new HashMap<>();
-        for (Map.Entry<String, List<MavenCoordinate>> entry : grouped.entrySet()) {
-            String key = entry.getKey();
-            MavenCoordinate best = chooseBestVersion(entry.getValue(), logger);
-            if (best != null) {
-                result.put(key, best);
+        for (Path pomPath : pomFiles) {
+            MavenCoordinate coord;
+            try {
+                coord = pomParser.parsePom(pomPath);
+            } catch (RuntimeException e) {
+                logger.lifecycle("Failed to parse POM {}: {}", pomPath, e.getMessage());
+                continue;
             }
+
+            if (coord == null || coord.getGroupId() == null || coord.getArtifactId() == null) {
+                continue;
+            }
+
+            if (coord.getPomPath() == null) {
+                coord.setPomPath(pomPath);
+            }
+
+            groups.computeIfAbsent(coord.getGroupId(), k -> new ArrayList<>()).add(coord);
+
+            String ga = coord.getGroupId() + ":" + coord.getArtifactId();
+            latest.compute(ga, (k, prev) -> chooseLatest(prev, coord));
         }
 
-        return result;
+        Map<String, List<MavenCoordinate>> frozenGroups = new HashMap<>();
+        for (Map.Entry<String, List<MavenCoordinate>> e : groups.entrySet()) {
+            frozenGroups.put(e.getKey(), Collections.unmodifiableList(e.getValue()));
+        }
+
+        latestByGa = Collections.unmodifiableMap(latest);
+        byGroup = Collections.unmodifiableMap(frozenGroups);
     }
 
-    /**
-     * Builds a dependency key in the form "groupId:artifactId".
-     *
-     * @param coord MavenCoordinate
-     * @return dependency key string
-     */
-    private static String toKey(MavenCoordinate coord) {
-        return coord.getGroupId() + ":" + coord.getArtifactId();
+    @Override
+    public Optional<MavenCoordinate> find(String groupId, String artifactId) {
+        if (groupId == null || artifactId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(latestByGa.get(groupId + ":" + artifactId));
     }
 
-    /**
-     * Chooses the best version from a list of coordinates.
-     * <p>
-     * Uses Gradle VersionNumber to compare version strings.
-     *
-     * @param candidates list of coordinates for the same groupId:artifactId
-     * @param logger logger for diagnostic messages
-     * @return coordinate with the highest version or null if list is empty
-     */
-    private MavenCoordinate chooseBestVersion(List<MavenCoordinate> candidates, Logger logger) {
-        return candidates.stream()
-                .filter(c -> c.getVersion() != null)
-                .max(Comparator.comparing(c -> parseVersion(c.getVersion(), logger)))
-                .orElse(null);
+    @Override
+    public List<MavenCoordinate> findAllForGroup(String groupId) {
+        if (groupId == null) {
+            return Collections.emptyList();
+        }
+        return byGroup.getOrDefault(groupId, Collections.emptyList());
     }
 
-    /**
-     * Parses a version string to VersionNumber.
-     * <p>
-     * Returns VersionNumber.UNKNOWN on failure.
-     *
-     * @param version version string
-     * @param logger logger for diagnostic messages
-     * @return parsed VersionNumber
-     */
-    private VersionNumber parseVersion(String version, Logger logger) {
+    @Override
+    public Map<String, MavenCoordinate> snapshot() {
+        return latestByGa;
+    }
+
+    private MavenCoordinate chooseLatest(MavenCoordinate a, MavenCoordinate b) {
+        if (a == null) return b;
+        if (b == null) return a;
+
+        String av = a.getVersion();
+        String bv = b.getVersion();
+
+        if (av == null || av.isBlank()) return b;
+        if (bv == null || bv.isBlank()) return a;
+
+        VersionNumber an = tryParse(av);
+        VersionNumber bn = tryParse(bv);
+
+        if (an != null && bn != null) {
+            return an.compareTo(bn) >= 0 ? a : b;
+        }
+
+        return av.compareTo(bv) >= 0 ? a : b;
+    }
+
+    private VersionNumber tryParse(String v) {
         try {
-            return VersionNumber.parse(version);
-        } catch (Exception e) {
-            logger.debug("Failed to parse version '{}': {}", version, e.getMessage());
-            return VersionNumber.UNKNOWN;
+            return VersionNumber.parse(v);
+        } catch (RuntimeException e) {
+            return null;
         }
     }
 }

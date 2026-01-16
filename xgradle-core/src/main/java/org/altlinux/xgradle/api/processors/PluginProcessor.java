@@ -20,12 +20,18 @@ import org.gradle.api.initialization.Settings;
 /**
  * Processor for Gradle plugin resolution.
  */
-public interface PluginProcessor {
+public interface PluginProcessor extends Processor<Settings> {
+
+    @Override
+    void process(Settings settings);
 
     /**
      * Configures plugin resolution strategy (eachPlugin hook) for given settings.
      *
      * @param settings Gradle settings instance
      */
-    void configurePluginResolution(Settings settings);
+    @Deprecated
+    default void configurePluginResolution(Settings settings){
+        process(settings);
+    }
 }
