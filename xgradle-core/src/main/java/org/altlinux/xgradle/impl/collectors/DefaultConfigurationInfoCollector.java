@@ -15,130 +15,112 @@
  */
 package org.altlinux.xgradle.impl.collectors;
 
+import com.google.inject.Singleton;
 import org.altlinux.xgradle.api.collectors.ConfigurationInfoCollector;
 import org.altlinux.xgradle.impl.model.ConfigurationInfo;
+import org.altlinux.xgradle.impl.model.ConfigurationInfoSnapshot;
+import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.invocation.Gradle;
 
-import java.util.*;
-
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Collects and organizes dependency configuration information across all projects in a Gradle build.
+ * Collects declared dependency configuration usage across all projects.
  *
- * <p>This collector traverses all configurations in all projects, gathering metadata about
- * how dependencies are used in different configurations. It tracks three key aspects for each dependency:
- * <ul>
- *   <li>Configuration metadata objects ({@link ConfigurationInfo})</li>
- *   <li>Test dependency flags indicating if a dependency is used in any test configuration</li>
- *   <li>Names of configurations where each dependency appears</li>
- * </ul>
+ * The collector scans declared dependencies in configurations and produces
+ * an immutable snapshot.
  *
- * <p>The collected information is organized by dependency coordinates (group:name) and can be
- * accessed through the provided getter methods after collection.
- *
- * <p>Main features:
- * <ul>
- *   <li>Aggregates configuration metadata across entire build</li>
- *   <li>Identifies test dependencies based on configuration usage</li>
- *   <li>Provides quick lookup of configuration names per dependency</li>
- * </ul>
- *
- * @see ConfigurationInfo
- *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
-class DefaultConfigurationInfoCollector implements ConfigurationInfoCollector {
-    private final Map<String, Set<ConfigurationInfo>> dependencyConfigurations = new HashMap<>();
-    private final Map<String, Boolean> testDependencyFlags = new HashMap<>();
-    private final Map<String, Set<String>> dependencyConfigNames = new HashMap<>();
+@Singleton
+final class DefaultConfigurationInfoCollector implements ConfigurationInfoCollector {
 
-    /**
-     * Collects dependency configuration information from all projects in the Gradle build.
-     *
-     * <p>This method traverses all configurations of all projects, processing each dependency
-     * to gather:
-     * <ul>
-     *   <li>Configuration metadata objects</li>
-     *   <li>Test configuration flags</li>
-     *   <li>Configuration names where dependency appears</li>
-     * </ul>
-     *
-     * <p>Dependencies are indexed by their coordinates (group:name). For test dependencies,
-     * the collector marks a dependency as test-imiterere if it appears in any test configuration,
-     * while preserving non-test status if it appears in both test and non-test configurations.
-     *
-     * @param gradle The Gradle instance representing the build
-     * @return null
-     */
     @Override
-    public Void collect(Gradle gradle) {
+    public ConfigurationInfoSnapshot collect(Gradle gradle) {
+        Map<String, Set<ConfigurationInfo>> dependencyConfigurations =
+                new LinkedHashMap<>();
+        Map<String, Boolean> testDependencyFlags =
+                new LinkedHashMap<>();
+        Map<String, Set<String>> dependencyConfigNames =
+                new LinkedHashMap<>();
+
         gradle.allprojects(project ->
-                project.getConfigurations().all(configuration -> {
-                    ConfigurationInfo configInfo = new ConfigurationInfo(configuration);
-                    for (Dependency dependency : configuration.getDependencies()) {
-                        if (dependency.getGroup() != null && dependency.getName() != null) {
-                            String key = dependency.getGroup() + ":" + dependency.getName();
-
-                            dependencyConfigurations
-                                    .computeIfAbsent(key, k -> new HashSet<>())
-                                    .add(configInfo);
-
-                            dependencyConfigNames
-                                    .computeIfAbsent(key, k -> new HashSet<>())
-                                    .add(configuration.getName());
-
-                            if (configInfo.hasTestConfiguration()) {
-                                testDependencyFlags.put(key, true);
-                            } else {
-                                testDependencyFlags.putIfAbsent(key, false);
-                            }
-                        }
-                    }
-                })
+                collectFromProject(
+                        project,
+                        dependencyConfigurations,
+                        testDependencyFlags,
+                        dependencyConfigNames
+                )
         );
-        return null;
+
+        return new ConfigurationInfoSnapshot(
+                dependencyConfigurations,
+                testDependencyFlags,
+                dependencyConfigNames
+        );
     }
 
-    /**
-     * Returns collected configuration metadata for dependencies.
-     *
-     * <p>The returned map uses dependency coordinates (group:name) as keys, with values
-     * being sets of {@link ConfigurationInfo} objects representing the different
-     * configurations where each dependency is used.
-     *
-     * @return Map of dependency coordinates to their configuration metadata sets
-     */
-    @Override
-    public Map<String, Set<ConfigurationInfo>> getDependencyConfigurations() {
-        return dependencyConfigurations;
+    private static void collectFromProject(
+            Project project,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
+            Map<String, Boolean> testDependencyFlags,
+            Map<String, Set<String>> dependencyConfigNames
+    ) {
+        project.getConfigurations().all(configuration ->
+                collectFromConfiguration(
+                        configuration,
+                        dependencyConfigurations,
+                        testDependencyFlags,
+                        dependencyConfigNames
+                )
+        );
     }
 
-    /**
-     * Returns test dependency flags for collected dependencies.
-     *
-     * <p>The returned map indicates for each dependency (keyed by group:name) whether
-     * it is used in any test configuration. A value of {@code true} means the dependency
-     * appears in at least one test configuration, while {@code false} means it only
-     * appears in non-test configurations.
-     *
-     * @return Map of dependency coordinates to their test dependency status
-     */
-    @Override
-    public Map<String, Boolean> getTestDependencyFlags() {
-        return testDependencyFlags;
+    private static void collectFromConfiguration(
+            Configuration configuration,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
+            Map<String, Boolean> testDependencyFlags,
+            Map<String, Set<String>> dependencyConfigNames
+    ) {
+        ConfigurationInfo configurationInfo = new ConfigurationInfo(configuration);
+
+        for (Dependency dependency : configuration.getDependencies()) {
+            String dependencyKey = toDependencyKey(dependency);
+            if (dependencyKey == null) {
+                continue;
+            }
+
+            dependencyConfigurations
+                    .computeIfAbsent(dependencyKey, key -> new HashSet<>())
+                    .add(configurationInfo);
+
+            dependencyConfigNames
+                    .computeIfAbsent(dependencyKey, key -> new HashSet<>())
+                    .add(configuration.getName());
+
+            if (configurationInfo.hasTestConfiguration()) {
+                testDependencyFlags.put(dependencyKey, true);
+            } else {
+                testDependencyFlags.putIfAbsent(dependencyKey, false);
+            }
+        }
     }
 
-    /**
-     * Returns configuration names where dependencies appear.
-     *
-     * <p>The returned map provides for each dependency (keyed by group:name) the set
-     * of configuration names where the dependency is declared.
-     *
-     * @return Map of dependency coordinates to sets of configuration names
-     */
-    @Override
-    public Map<String, Set<String>> getDependencyConfigNames() {
-        return dependencyConfigNames;
+    private static String toDependencyKey(Dependency dependency) {
+        String group = dependency.getGroup();
+        String name = dependency.getName();
+
+        if (group == null || group.trim().isEmpty()) {
+            return null;
+        }
+        if (name == null || name.trim().isEmpty()) {
+            return null;
+        }
+        return group + ":" + name;
     }
 }

@@ -17,10 +17,10 @@ import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
  * Controller for managing XMvn compatibility functions for BOM artifacts.
  * Validates required CLI parameters and delegates registration to a BOM {@link Registrar}.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultBomXmvnCompatController implements XmvnCompatController {
+final class DefaultBomXmvnCompatController implements XmvnCompatController {
 
     private final Registrar registrar;
 

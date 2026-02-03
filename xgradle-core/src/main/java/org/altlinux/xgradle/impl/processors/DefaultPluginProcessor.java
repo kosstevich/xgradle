@@ -51,10 +51,10 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * @see VersionScanner
  * @see PomFinder
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginProcessor implements PluginProcessor {
+final class DefaultPluginProcessor implements PluginProcessor {
 
     private final VersionScanner versionScanner;
     private final Logger logger;

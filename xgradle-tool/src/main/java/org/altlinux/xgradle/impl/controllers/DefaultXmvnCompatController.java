@@ -18,32 +18,18 @@ import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
  * Validates required CLI parameters and delegates registration to a library {@link Registrar}.
  * BOM and Javadoc modes are ignored by this controller.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultXmvnCompatController implements XmvnCompatController {
+final class DefaultXmvnCompatController implements XmvnCompatController {
 
     private final Registrar registrar;
 
-    /**
-     * Constructs a new library controller.
-     *
-     * @param registrar registrar for library artifacts
-     */
     @Inject
     DefaultXmvnCompatController(@Library Registrar registrar) {
         this.registrar = registrar;
     }
 
-    /**
-     * Configures and executes XMvn registration for library artifacts.
-     * If library registration is requested but required parameters are missing, throws a CLI usage exception.
-     *
-     * @param jCommander command-line parser (not used on success path)
-     * @param args raw command-line args (not used)
-     * @param arguments parsed command-line arguments container
-     * @param logger logger instance (not used on success path)
-     */
     @Override
     public void configureXmvnCompatFunctions(
             JCommander jCommander,

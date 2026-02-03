@@ -41,14 +41,10 @@ import org.altlinux.xgradle.impl.services.ServicesModule;
  * Google Guice dependency injection module for XGradle tool.
  * Configures bindings for all interfaces and their implementations.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 public final class XGradleToolModule extends AbstractModule {
 
-    /**
-     * Configures the dependency injection bindings.
-     * Binds interfaces to their implementations with appropriate naming.
-     */
     @Override
     protected void configure() {
 

@@ -50,24 +50,16 @@ import java.util.List;
  * Uses multi-threading to improve performance when processing large numbers of POM files.
  * Prevents duplicate processing of artifacts with same coordinates.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
+final class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
 
     private final ArtifactFactory artifactFactory;
     private final PomContainer pomContainer;
     private final ArtifactCache artifactCache;
     private final Logger logger;
 
-    /**
-     * Constructs a new ConcurrentLibraryPomParser with required dependencies.
-     *
-     * @param pomContainer container for POM file management
-     * @param artifactCache cache for tracking processed artifacts
-     * @param artifactFactory factory for creating artifact models
-     * @param logger logger instance
-     */
     @Inject
     ConcurrentLibraryPomParser(
             PomContainer pomContainer,
@@ -81,16 +73,6 @@ class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
         this.logger = logger;
     }
 
-    /**
-     * Retrieves artifact coordinates from the specified directory using concurrent processing.
-     * For each POM file, finds the corresponding JAR file and verifies its existence.
-     * Prevents duplicate processing of artifacts with same coordinates.
-     *
-     * @param searchingDir the directory to search for POM files
-     * @param artifactNames optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding JAR file paths
-     * @throws RuntimeException if an error occurs during POM file processing
-     */
     @Override
     public HashMap<String, Path> getArtifactCoords(String searchingDir, Optional<List<String>> artifactNames) {
         Collection<Path> pomPaths;
@@ -123,12 +105,6 @@ class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
         return new HashMap<>(artifactCoordinatesMap);
     }
 
-    /**
-     * Processes a single POM file and adds it to the result map if not duplicate.
-     *
-     * @param pomPath path to the POM file
-     * @param artifactCoordinatesMap map to store the results
-     */
     private void processPomFile(Path pomPath, ConcurrentHashMap<String, Path> artifactCoordinatesMap) {
         try {
             ArtifactData artifactData = extractArtifactData(pomPath);
@@ -151,12 +127,6 @@ class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
         }
     }
 
-    /**
-     * Extracts artifact data from POM file including coordinates and JAR path.
-     *
-     * @param pomPath path to the POM file
-     * @return artifact data or null if extraction fails
-     */
     private ArtifactData extractArtifactData(Path pomPath) {
         MavenXpp3Reader reader = new MavenXpp3Reader();
 
@@ -190,13 +160,6 @@ class ConcurrentLibraryPomParser implements PomParser<HashMap<String, Path>> {
         }
     }
 
-    /**
-     * Determines JAR file path from POM model.
-     *
-     * @param pomPath path to the POM file
-     * @param model the Maven model
-     * @return path to the corresponding JAR file
-     */
     private Path getJarPathFromModel(Path pomPath, Model model) {
         String artifactId = model.getArtifactId();
         String version = model.getVersion();

@@ -51,10 +51,10 @@ import java.util.Set;
  * <p>The core processing occurs in {@link #process(Context)} which can expand
  * the project's dependency set by incorporating BOM-managed dependencies (group:artifact).
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultBomProcessor implements BomProcessor {
+final class DefaultBomProcessor implements BomProcessor {
 
     private final Map<String, List<String>> bomManagedDeps = new LinkedHashMap<>();
     private final Set<String> processedBoms = new HashSet<>();

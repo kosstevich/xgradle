@@ -11,14 +11,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Default implementation of PomFilesCollector.
- *
- * Scans the filesystem and returns all .pom files
- * under the specified root directory.
- */
 @Singleton
-class DefaultPomFilesCollector implements PomFilesCollector {
+final class DefaultPomFilesCollector implements PomFilesCollector {
 
     private static final int MAX_SEARCH_DEPTH = 10;
 
@@ -29,12 +23,6 @@ class DefaultPomFilesCollector implements PomFilesCollector {
         this.logger = logger;
     }
 
-    /**
-     * Collects all POM files under the given root directory.
-     *
-     * @param rootDirectory root directory to scan
-     * @return list of POM file paths
-     */
     @Override
     public List<Path> collect(Path rootDirectory) {
         List<Path> pomPaths = new ArrayList<>();
@@ -45,9 +33,11 @@ class DefaultPomFilesCollector implements PomFilesCollector {
         }
 
         try (var stream = Files.walk(rootDirectory, MAX_SEARCH_DEPTH)) {
-            stream
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".pom"))
+            stream.filter(Files::isRegularFile)
+                    .filter(p -> {
+                        String s = p.toString();
+                        return s.endsWith(".pom");
+                    })
                     .forEach(pomPaths::add);
         } catch (IOException e) {
             logger.lifecycle("Error while scanning POM directory {}: {}", rootDirectory, e.getMessage());

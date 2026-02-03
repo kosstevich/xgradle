@@ -47,10 +47,10 @@ import org.gradle.api.initialization.Settings;
  * @see PluginManager
  * @see SystemDepsExtension#getJarsPath()
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginsDependenciesHandler implements PluginsDependenciesHandler {
+final class DefaultPluginsDependenciesHandler implements PluginsDependenciesHandler {
 
     private final PluginManager pluginManager;
 

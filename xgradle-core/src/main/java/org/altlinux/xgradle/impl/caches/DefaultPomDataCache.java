@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class DefaultPomDataCache implements PomDataCache {
+public final class DefaultPomDataCache implements PomDataCache {
 
     private final Cache<String, MavenCoordinate> pomCache;
     private final Cache<String, ImmutableList<MavenCoordinate>> depMgmtCache;

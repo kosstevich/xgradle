@@ -16,32 +16,18 @@ import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
  * Controller for managing Javadoc installation.
  * Validates required CLI parameters and delegates work to {@link JavadocInstaller}.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultJavadocXmvnCompatController implements XmvnCompatController {
+final class DefaultJavadocXmvnCompatController implements XmvnCompatController {
 
     private final JavadocInstaller javadocInstaller;
 
-    /**
-     * Constructs a new controller.
-     *
-     * @param javadocInstaller installer for Javadoc artifacts
-     */
     @Inject
     DefaultJavadocXmvnCompatController(JavadocInstaller javadocInstaller) {
         this.javadocInstaller = javadocInstaller;
     }
 
-    /**
-     * Configures Javadoc installation based on command-line arguments.
-     * If Javadoc mode is enabled but required parameters are missing, throws a CLI usage exception.
-     *
-     * @param jCommander command-line parser (not used on success path)
-     * @param args raw command-line args (not used)
-     * @param arguments parsed command-line arguments container
-     * @param logger logger instance (not used on success path)
-     */
     @Override
     public void configureXmvnCompatFunctions(
             JCommander jCommander,

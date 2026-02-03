@@ -28,10 +28,10 @@ import java.util.stream.Stream;
  * Provides methods for artifact filtering, parent block removal, and snapshot exclusion.
  * Implements PomService interface for POM file manipulation and filtering.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class PomRedactorService implements PomService {
+final class PomRedactorService implements PomService {
     private final PomRedactor pomRedactor;
     private final PomContainer pomContainer;
 

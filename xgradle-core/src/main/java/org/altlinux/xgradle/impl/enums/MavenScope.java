@@ -3,7 +3,7 @@ package org.altlinux.xgradle.impl.enums;
 /**
  * Maven dependency scope.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 public enum MavenScope {
 

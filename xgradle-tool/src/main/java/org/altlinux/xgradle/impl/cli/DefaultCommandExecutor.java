@@ -27,10 +27,10 @@ import java.io.InputStreamReader;
  * Default implementation of CommandExecutor.
  * Handles execution of system commands with output streaming.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultCommandExecutor implements CommandExecutor {
+final class DefaultCommandExecutor implements CommandExecutor {
 
     /**
      * Executes the specified process builder and returns the exit code.

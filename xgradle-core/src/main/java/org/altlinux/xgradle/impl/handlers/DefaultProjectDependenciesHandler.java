@@ -19,13 +19,9 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.altlinux.xgradle.api.handlers.ProjectDependenciesHandler;
-import org.altlinux.xgradle.api.managers.RepositoryManager;
-import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
-import org.altlinux.xgradle.impl.resolution.SystemDependencyResolution;
+import org.altlinux.xgradle.api.resolution.SystemDependencyResolution;
 
 import org.gradle.api.invocation.Gradle;
-
-import java.io.File;
 
 /**
  * Handles dependency resolution and substitution for a Gradle project using system-installed artifacts.
@@ -34,10 +30,10 @@ import java.io.File;
  * dependency resolution process (BOM processing, system artifact resolution, transitive closure,
  * configuration, and substitution) to an internal resolution workflow.</p>
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultProjectDependenciesHandler implements ProjectDependenciesHandler {
+final class DefaultProjectDependenciesHandler implements ProjectDependenciesHandler {
 
     private final SystemDependencyResolution resolution;
 

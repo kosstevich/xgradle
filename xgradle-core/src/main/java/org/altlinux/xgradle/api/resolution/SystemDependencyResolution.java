@@ -1,4 +1,4 @@
-package org.altlinux.xgradle.impl.resolution;
+package org.altlinux.xgradle.api.resolution;
 
 import org.gradle.api.invocation.Gradle;
 

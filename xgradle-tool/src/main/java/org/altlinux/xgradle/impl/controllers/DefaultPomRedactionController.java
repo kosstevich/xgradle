@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Singleton
-class DefaultPomRedactionController implements PomRedactionController {
+final class DefaultPomRedactionController implements PomRedactionController {
 
     private final ToolConfig toolConfig;
     private final PomService pomService;

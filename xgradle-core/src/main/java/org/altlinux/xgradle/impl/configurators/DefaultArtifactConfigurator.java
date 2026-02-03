@@ -17,7 +17,6 @@ package org.altlinux.xgradle.impl.configurators;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.altlinux.xgradle.api.configurators.ArtifactConfigurator;
 import org.altlinux.xgradle.api.managers.ScopeManager;
 import org.altlinux.xgradle.impl.enums.ConfigurationType;
@@ -25,92 +24,130 @@ import org.altlinux.xgradle.impl.enums.MavenPackaging;
 import org.altlinux.xgradle.impl.enums.MavenScope;
 import org.altlinux.xgradle.impl.model.ConfigurationInfo;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.invocation.Gradle;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class DefaultArtifactConfigurator implements ArtifactConfigurator {
-    private final ScopeManager mavenScopeManager;
-    private final Map<String, Set<String>> configurationArtifacts = new HashMap<>();
-    private final Map<String, Set<ConfigurationInfo>> dependencyConfigurations;
-    private final Set<String> testContextDependencies;
+final class DefaultArtifactConfigurator implements ArtifactConfigurator {
+
+    private final ScopeManager scopeManager;
+
+    private final Map<String, Set<String>> configurationArtifacts = new LinkedHashMap<>();
 
     @Inject
-    DefaultArtifactConfigurator(
-            ScopeManager mavenScopeManager,
-            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
-            Set<String> testContextDependencies) {
-        this.mavenScopeManager = mavenScopeManager;
-        this.dependencyConfigurations = dependencyConfigurations;
-        this.testContextDependencies = testContextDependencies;
+    DefaultArtifactConfigurator(ScopeManager scopeManager) {
+        this.scopeManager = scopeManager;
     }
 
     @Override
-    public void configure(Gradle gradle,
-                          Map<String, MavenCoordinate> systemArtifacts,
-                          Map<String, Set<String>> dependencyConfigNames) {
-
-        gradle.allprojects(proj -> {
-            configurationArtifacts.clear();
-            systemArtifacts.forEach((key, coord) -> {
-                if (shouldSkip(coord) || isSelfDependency(proj, coord)) return;
-
-                Set<String> configNames = dependencyConfigNames.get(key);
-                if (configNames != null && !configNames.isEmpty()) {
-                    addToOriginalConfigurations(proj, key, coord, configNames);
-                } else {
-                    addBasedOnScope(proj, key, coord);
-                }
-            });
-        });
-    }
-
-    private boolean shouldSkip(MavenCoordinate coord) {
-        return coord.isBom() || MavenPackaging.POM.getPackaging().equals(coord.getPackaging());
-    }
-
-    private void addToOriginalConfigurations(Project project, String key,
-                                             MavenCoordinate coord,
-                                             Set<String> configNames) {
-        if (isSelfDependency(project, coord)) {
+    public void configure(
+            Gradle gradle,
+            Map<String, MavenCoordinate> systemArtifacts,
+            Map<String, Set<String>> dependencyConfigNames,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
+            Set<String> testContextDependencies
+    ) {
+        if (gradle == null || systemArtifacts == null || systemArtifacts.isEmpty()) {
             return;
         }
 
-        String notation = key + ":" + coord.getVersion();
-        for (String configName : configNames) {
-            Configuration config = project.getConfigurations().findByName(configName);
-            if (config != null && canModifyConfiguration(config)) {
-                try {
-                    project.getDependencies().add(configName, notation);
-                    trackArtifact(configName, notation);
-                } catch (Exception e) {
-                    project.getLogger().debug("Cannot modify configuration '{}': {}", configName, e.getMessage());
-                }
+        gradle.allprojects(project -> addArtifactsToProject(
+                project,
+                systemArtifacts,
+                dependencyConfigNames,
+                dependencyConfigurations,
+                testContextDependencies
+        ));
+    }
+
+    private void addArtifactsToProject(
+            Project project,
+            Map<String, MavenCoordinate> systemArtifacts,
+            Map<String, Set<String>> dependencyConfigNames,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
+            Set<String> testContextDependencies
+    ) {
+        for (Map.Entry<String, MavenCoordinate> e : systemArtifacts.entrySet()) {
+            String key = e.getKey();
+            MavenCoordinate coord = e.getValue();
+
+            if (key == null || coord == null) {
+                continue;
+            }
+
+            if (shouldSkip(coord)) {
+                continue;
+            }
+
+            if (isSelfDependency(project, coord)) {
+                continue;
+            }
+
+            Set<String> originalConfigs = dependencyConfigNames != null ? dependencyConfigNames.get(key) : null;
+            if (originalConfigs != null && !originalConfigs.isEmpty()) {
+                addToOriginalConfigurations(project, key, coord, originalConfigs);
+            } else {
+                addByDerivedConfiguration(project, key, coord, dependencyConfigurations, testContextDependencies);
             }
         }
     }
 
-    private void addBasedOnScope(Project project, String key, MavenCoordinate coord) {
-        if (isSelfDependency(project, coord)) {
+    private boolean shouldSkip(MavenCoordinate coord) {
+        if (coord.isBom()) {
+            return true;
+        }
+        String packaging = coord.getPackaging();
+        return packaging != null && MavenPackaging.POM.getPackaging().equals(packaging);
+    }
+
+    private void addToOriginalConfigurations(
+            Project project,
+            String key,
+            MavenCoordinate coord,
+            Set<String> configNames
+    ) {
+        String version = coord.getVersion();
+        if (version == null || version.isBlank()) {
             return;
         }
 
-        String notation = key + ":" + coord.getVersion();
+        String notation = key + ":" + version;
 
-        if (testContextDependencies.contains(key) || coord.isTestContext()) {
+        for (String configName : configNames) {
+            if (configName == null || configName.isBlank()) {
+                continue;
+            }
+            safeAddToConfiguration(project, configName, notation);
+        }
+    }
+
+    private void addByDerivedConfiguration(
+            Project project,
+            String key,
+            MavenCoordinate coord,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations,
+            Set<String> testContextDependencies
+    ) {
+        String version = coord.getVersion();
+        if (version == null || version.isBlank()) {
+            return;
+        }
+
+        String notation = key + ":" + version;
+
+        if ((testContextDependencies != null && testContextDependencies.contains(key)) || coord.isTestContext()) {
             safeAddToConfiguration(project, ConfigurationType.TEST.gradleConfiguration(), notation);
             return;
         }
 
-        ConfigurationType type = determineConfigurationType(key);
-
+        ConfigurationType type = determineConfigurationType(key, dependencyConfigurations);
         if (type != null && type != ConfigurationType.UNKNOWN) {
             safeAddToConfiguration(project, type.gradleConfiguration(), notation);
             return;
@@ -119,13 +156,23 @@ class DefaultArtifactConfigurator implements ArtifactConfigurator {
         addBasedOnScopeDefault(project, key, notation);
     }
 
-    private ConfigurationType determineConfigurationType(String key) {
-        Set<ConfigurationInfo> infos = dependencyConfigurations.get(key);
+    private ConfigurationType determineConfigurationType(
+            String depKey,
+            Map<String, Set<ConfigurationInfo>> dependencyConfigurations
+    ) {
+        if (dependencyConfigurations == null) {
+            return null;
+        }
+
+        Set<ConfigurationInfo> infos = dependencyConfigurations.get(depKey);
         if (infos == null || infos.isEmpty()) {
             return null;
         }
 
         for (ConfigurationInfo info : infos) {
+            if (info == null) {
+                continue;
+            }
             if (info.hasTestConfiguration()) {
                 continue;
             }
@@ -140,7 +187,7 @@ class DefaultArtifactConfigurator implements ArtifactConfigurator {
     }
 
     private void addBasedOnScopeDefault(Project project, String key, String notation) {
-        MavenScope scope = mavenScopeManager.getScope(key);
+        MavenScope scope = scopeManager.getScope(key);
 
         if (scope == MavenScope.PROVIDED || scope == MavenScope.COMPILE) {
             safeAddToConfiguration(project, ConfigurationType.COMPILE_ONLY.gradleConfiguration(), notation);
@@ -160,10 +207,28 @@ class DefaultArtifactConfigurator implements ArtifactConfigurator {
         safeAddToConfiguration(project, ConfigurationType.IMPLEMENTATION.gradleConfiguration(), notation);
     }
 
-    private void trackArtifact(String config, String artifact) {
+    private void safeAddToConfiguration(Project project, String configName, String notation) {
+        Configuration config = project.getConfigurations().findByName(configName);
+        if (config == null || !canModifyConfiguration(config)) {
+            return;
+        }
+
+        try {
+            project.getDependencies().add(configName, notation);
+            trackArtifact(configName, notation);
+        } catch (Exception e) {
+            project.getLogger().debug("Cannot add to configuration '{}': {}", configName, e.getMessage());
+        }
+    }
+
+    private boolean canModifyConfiguration(Configuration configuration) {
+        return configuration.getState() != Configuration.State.RESOLVED;
+    }
+
+    private void trackArtifact(String configName, String notation) {
         configurationArtifacts
-                .computeIfAbsent(config, k -> new LinkedHashSet<>())
-                .add(artifact);
+                .computeIfAbsent(configName, k -> new LinkedHashSet<>())
+                .add(notation);
     }
 
     private boolean isSelfDependency(Project project, MavenCoordinate coord) {
@@ -177,8 +242,7 @@ class DefaultArtifactConfigurator implements ArtifactConfigurator {
             Object group = p.getGroup();
             String name = p.getName();
             if (group != null && name != null) {
-                String k = group + ":" + name;
-                projectIndex.put(k, p);
+                projectIndex.put(group + ":" + name, p);
             }
         }
 
@@ -186,29 +250,18 @@ class DefaultArtifactConfigurator implements ArtifactConfigurator {
         boolean isSelf = projectIndex.containsKey(coordKey);
 
         if (isSelf) {
-            project.getLogger().debug("Detected project dependency, skipping: {}:{}:{}",
-                    coord.getGroupId(), coord.getArtifactId(), coord.getVersion());
+            project.getLogger().debug(
+                    "Detected project dependency, skipping: {}:{}:{}",
+                    coord.getGroupId(),
+                    coord.getArtifactId(),
+                    coord.getVersion()
+            );
         }
 
         return isSelf;
     }
 
-    private void safeAddToConfiguration(Project project, String configName, String notation) {
-        Configuration config = project.getConfigurations().findByName(configName);
-        if (config != null && canModifyConfiguration(config)) {
-            try {
-                project.getDependencies().add(configName, notation);
-                trackArtifact(configName, notation);
-            } catch (Exception e) {
-                project.getLogger().debug("Cannot add to configuration '{}': {}", configName, e.getMessage());
-            }
-        }
-    }
-
-    private boolean canModifyConfiguration(Configuration configuration) {
-        return configuration.getState() != Configuration.State.RESOLVED;
-    }
-
+    @Override
     public Map<String, Set<String>> getConfigurationArtifacts() {
         return configurationArtifacts;
     }

@@ -47,26 +47,8 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Ivan Khanas
  */
-public class XGradlePlugin implements Plugin<Gradle> {
+public final class XGradlePlugin implements Plugin<Gradle> {
 
-    /**
-     * Applies the plugin to the Gradle instance.
-     *
-     * <p>Main operations:
-     * <ol>
-     *   <li>Prints the plugin logo if enabled</li>
-     *   <li>Initializes dependency handlers</li>
-     *   <li>Registers lifecycle hooks:
-     *     <ul>
-     *       <li>Before settings: Processes plugin dependencies</li>
-     *       <li>Projects loaded: Configures repositories</li>
-     *       <li>Projects evaluated: Processes project dependencies</li>
-     *     </ul>
-     *   </li>
-     * </ol>
-     *
-     * @param gradle the Gradle instance to which the plugin is applied
-     */
     @Override
     public void apply(@NotNull Gradle gradle) {
         if (LogoPrinter.isLogoEnabled()) {

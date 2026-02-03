@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Ivan Khanas
  */
 @Singleton
-class MavenPomFilenameMatcher implements PomFilenameMatcher {
+final class MavenPomFilenameMatcher implements PomFilenameMatcher {
 
     /**
      * Checks whether the given path corresponds to a candidate POM file

@@ -35,22 +35,15 @@ import java.util.List;
  * parent block removal, and snapshot filtering capabilities.
  * Supports both filtered and unfiltered artifact processing.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> {
+final class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> {
 
     private final PomParser<HashMap<String, Path>> pomParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
 
-    /**
-     * Constructs a new DefaultLibraryPomProcessor with required dependencies.
-     *
-     * @param pomParser the parser for library POM files
-     * @param pomService the service for POM processing operations
-     * @param toolConfig the configuration for the tool
-     */
     @Inject
     DefaultLibraryPomProcessor(
             @Library PomParser<HashMap<String, Path>> pomParser,
@@ -62,14 +55,6 @@ class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> 
         this.toolConfig = toolConfig;
     }
 
-    /**
-     * Processes library artifacts from the specified directory.
-     * Applies artifact exclusion, parent block removal, and snapshot filtering.
-     *
-     * @param searchingDir the directory to search for library artifacts
-     * @param artifactName optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding JAR file paths
-     */
     @Override
     public HashMap<String, Path> pomsFromDirectory(String searchingDir, Optional<List<String>> artifactName) {
         HashMap<String, Path> artifacts = getArtifactsFromParser(searchingDir, artifactName);
@@ -84,14 +69,6 @@ class DefaultLibraryPomProcessor implements PomProcessor<HashMap<String, Path>> 
         return artifacts;
     }
 
-    /**
-     * Retrieves artifacts from parser based on whether artifact names are specified.
-     * Delegates to appropriate parser method depending on the presence of artifact names.
-     *
-     * @param searchingDir the directory to search for artifacts
-     * @param artifactName optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding JAR file paths
-     */
     private HashMap<String, Path> getArtifactsFromParser(String searchingDir, Optional<List<String>> artifactName) {
         if (artifactName.isPresent()) {
             return pomParser.getArtifactCoords(searchingDir, artifactName);

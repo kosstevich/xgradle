@@ -1,10 +1,36 @@
+/*
+ * Copyright 2025 BaseALT Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.altlinux.xgradle.impl.resolution;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.altlinux.xgradle.api.processors.BomProcessor;
+import org.altlinux.xgradle.api.resolution.ResolutionStep;
 import org.altlinux.xgradle.impl.resolvers.DependencySubstitutor;
 
+/**
+ * Configures dependency substitution based on requested versions,
+ * resolved system artifacts, and BOM-managed versions.
+ *
+ * The step creates and configures a DependencySubstitutor and stores it
+ * in ResolutionContext for later reporting.
+ *
+ * @author Ivan Khanas <xeno@altlinux.org>
+ */
 @Singleton
 final class ApplySubstitutionStep implements ResolutionStep {
 
@@ -23,11 +49,11 @@ final class ApplySubstitutionStep implements ResolutionStep {
     @Override
     public void execute(ResolutionContext resolutionContext) {
         DependencySubstitutor substitutor = new DependencySubstitutor(
-                resolutionContext.requestedVersions,
-                resolutionContext.systemArtifacts,
+                resolutionContext.getRequestedVersions(),
+                resolutionContext.getSystemArtifacts(),
                 bomProcessor.getManagedVersions()
         );
-        substitutor.configure(resolutionContext.gradle);
-        resolutionContext.substitutor = substitutor;
+        substitutor.configure(resolutionContext.getGradle());
+        resolutionContext.setSubstitutor(substitutor);
     }
 }

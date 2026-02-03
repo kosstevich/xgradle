@@ -48,10 +48,10 @@ import java.util.concurrent.Executors;
  * Identifies BOM files by packaging type and dependency management section.
  * Prevents duplicate processing of artifacts with same coordinates.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class ConcurrentBomParser implements PomParser<Set<Path>> {
+final class ConcurrentBomParser implements PomParser<Set<Path>> {
 
     private final ArtifactFactory artifactFactory;
     private final PomContainer pomContainer;

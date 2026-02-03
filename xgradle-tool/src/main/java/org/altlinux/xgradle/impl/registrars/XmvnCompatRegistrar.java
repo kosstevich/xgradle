@@ -40,24 +40,16 @@ import java.util.List;
  * Registrar implementation for XMvn compatibility with library artifacts.
  * Handles registration of library artifacts using XMvn commands.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class XmvnCompatRegistrar implements Registrar {
+final class XmvnCompatRegistrar implements Registrar {
 
     private final ArtifactContainer artifactContainer;
     private final CommandExecutor commandExecutor;
     private final CommandLineParser commandLineParser;
     private final Logger logger;
 
-    /**
-     * Constructs a new XmvnCompatRegistrar with required dependencies.
-     *
-     * @param artifactContainer container for artifact management
-     * @param commandExecutor executor for command execution
-     * @param commandLineParser parser for command-line parsing
-     * @param logger logger instance
-     */
     @Inject
     XmvnCompatRegistrar(
             ArtifactContainer artifactContainer,
@@ -71,14 +63,6 @@ class XmvnCompatRegistrar implements Registrar {
         this.logger = logger;
     }
 
-    /**
-     * Registers artifacts from the specified directory using XMvn commands.
-     *
-     * @param searchingDir the directory to search for artifacts
-     * @param registerCommand the XMvn registration command to use
-     * @param artifactName optional list of artifact names to filter by
-     * @throws RuntimeException if command execution fails
-     */
     @Override
     public void registerArtifacts(String searchingDir, String registerCommand, Optional<List<String>> artifactName) {
         Map<String, Path> artifacts;

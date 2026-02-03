@@ -26,10 +26,10 @@ import java.util.List;
  * Default implementation of {@link CommandLineParser}.
  * Parses a shell-like command string into argv-style list.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultCommandLineParser implements CommandLineParser {
+final class DefaultCommandLineParser implements CommandLineParser {
 
     /**
      * Parses a command string into executable parts.

@@ -46,20 +46,14 @@ import java.util.List;
  * Default implementation of ArtifactsInstaller for Gradle plugin artifacts.
  * Handles installation of plugin POM and JAR files to target directories with proper naming.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
+final class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
 
     private final ArtifactContainer artifactContainer;
     private final Logger logger;
 
-    /**
-     * Constructs a new DefaultPluginArtifactsInstaller with required dependencies.
-     *
-     * @param artifactContainer container for artifact management
-     * @param logger logger instance
-     */
     @Inject
     DefaultPluginArtifactsInstaller(
             ArtifactContainer artifactContainer,
@@ -69,17 +63,6 @@ class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
         this.logger = logger;
     }
 
-    /**
-     * Installs plugin artifacts to the specified target directories.
-     * Copies POM and JAR files with standardized naming based on artifactId.
-     *
-     * @param searchingDirectory the directory to search for artifacts
-     * @param artifactName optional list of artifact names to filter by
-     * @param pomInstallationDirectory target directory for POM files
-     * @param jarInstallationDirectory target directory for JAR files
-     * @param processingType the type of processing (should be PLUGINS)
-     * @throws RuntimeException if target directories cannot be created
-     */
     @Override
     public void install(
             String searchingDirectory,
@@ -204,14 +187,6 @@ class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
         }
     }
 
-    /**
-     * Reads and parses a POM file into a Maven model.
-     *
-     * @param pomPath path to the POM file
-     * @return parsed Maven model
-     * @throws IOException if an I/O error occurs
-     * @throws XmlPullParserException if the POM file cannot be parsed
-     */
     private Model readPomModel(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {

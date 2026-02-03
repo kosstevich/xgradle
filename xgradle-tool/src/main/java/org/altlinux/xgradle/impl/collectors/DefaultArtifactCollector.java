@@ -35,10 +35,10 @@ import java.util.Optional;
  * Default implementation of ArtifactCollector for collecting artifacts based on processing type.
  * Supports library, plugin and javadoc artifact collection.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultArtifactCollector implements ArtifactCollector {
+final class DefaultArtifactCollector implements ArtifactCollector {
     private final PomProcessor<HashMap<String, Path>> libraryPomProcessor;
     private final PomProcessor<HashMap<String, Path>> gradlePlugins;
     private final PomProcessor<HashMap<String, Path>> javadocProcessor;

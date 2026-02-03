@@ -14,12 +14,6 @@ import org.altlinux.xgradle.impl.di.XGradleToolModule;
  */
 public class Main {
 
-    /**
-     * Main method that serves as the application entry point.
-     * Exits the process with the exit code returned by the application.
-     *
-     * @param args command-line arguments
-     */
     public static void main(String[] args) {
         Injector injector = Guice.createInjector(new XGradleToolModule());
         int code = injector.getInstance(Application.class).run(args).getExitCode();

@@ -9,8 +9,8 @@ public final class CollectorsModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        bind(ConfigurationInfoCollector.class).to(DefaultConfigurationInfoCollector.class);
         bind(DependencyCollector.class).to(DefaultDependencyCollector.class);
+        bind(ConfigurationInfoCollector.class).to(DefaultConfigurationInfoCollector.class);
         bind(PomFilesCollector.class).to(DefaultPomFilesCollector.class);
     }
 }

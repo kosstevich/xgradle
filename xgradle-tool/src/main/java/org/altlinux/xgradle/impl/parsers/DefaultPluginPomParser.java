@@ -46,23 +46,16 @@ import java.util.stream.Collectors;
  * Handles complex plugin dependencies and analyzes POM dependencies to find related artifacts.
  * Prevents duplicate processing of artifacts with same coordinates.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
+final class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
 
     private final ArtifactFactory artifactFactory;
     private final PomContainer pomContainer;
     private final ArtifactCache artifactCache;
     private final Logger logger;
 
-    /**
-     * Constructs a new PluginPomsParser with required dependencies.
-     *
-     * @param pomContainer container for POM file management
-     * @param artifactCache cache for tracking processed artifacts
-     * @param logger logger instance
-     */
     @Inject
     DefaultPluginPomParser(
             PomContainer pomContainer,
@@ -76,16 +69,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         this.logger = logger;
     }
 
-    /**
-     * Retrieves plugin artifact coordinates from the specified directory.
-     * Analyzes POM dependencies to find all related artifacts for plugin installation.
-     * Prevents duplicate processing of artifacts with same coordinates.
-     *
-     * @param searchingDir the directory to search for plugin POM files
-     * @param artifactNames optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding JAR file paths
-     * @throws RuntimeException if an error occurs during POM file processing
-     */
     @Override
     public HashMap<String, Path> getArtifactCoords(String searchingDir, Optional<List<String>> artifactNames) {
         if (artifactNames == null || !artifactNames.isPresent()) {
@@ -141,16 +124,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         return result;
     }
 
-    /**
-     * Analyzes POM dependencies to find all related artifacts for plugin installation.
-     * Recursively processes POM dependencies to build complete artifact map.
-     * Prevents duplicate processing of artifacts with same coordinates.
-     *
-     * @param searchingDir the directory to search for dependency POM files
-     * @param pomPath path to the POM file being analyzed
-     * @param model the Maven model of the POM file
-     * @param result map to store the resulting artifact coordinates
-     */
     private void analyzePomDependencies(String searchingDir, Path pomPath, Model model,
                                         HashMap<String, Path> result) {
         if (model.getDependencies() == null) {
@@ -218,12 +191,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         }
     }
 
-    /**
-     * Extracts coordinates from Maven model.
-     *
-     * @param model the Maven model
-     * @return artifact coordinates
-     */
     private ArtifactCoordinates extractCoordinates(Model model) {
         String groupId = model.getGroupId();
         String artifactId = model.getArtifactId();
@@ -239,12 +206,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         return artifactFactory.coordinates(groupId, artifactId, version);
     }
 
-    /**
-     * Creates a minimal Maven model for a dependency.
-     *
-     * @param dependency the dependency
-     * @return created model
-     */
     private Model createModelForDependency(Dependency dependency) {
         Model model = new Model();
         model.setGroupId(dependency.getGroupId());
@@ -253,13 +214,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         return model;
     }
 
-    /**
-     * Finds the corresponding JAR file for a POM file.
-     *
-     * @param pomPath path to the POM file
-     * @param model the Maven model of the POM file
-     * @return path to the corresponding JAR file, or null if not found
-     */
     private Path findJarForPom(Path pomPath, Model model) {
         String artifactId = model.getArtifactId();
         String version = model.getVersion();
@@ -276,14 +230,6 @@ class DefaultPluginPomParser implements PomParser<HashMap<String, Path>> {
         return null;
     }
 
-    /**
-     * Reads and parses a POM file into a Maven model.
-     *
-     * @param pomPath path to the POM file
-     * @return parsed Maven model
-     * @throws IOException if an I/O error occurs
-     * @throws XmlPullParserException if the POM file cannot be parsed
-     */
     private Model readModel(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {

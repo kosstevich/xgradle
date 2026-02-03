@@ -17,33 +17,27 @@ package org.altlinux.xgradle.impl.processors;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.altlinux.xgradle.api.managers.TransitiveDependencyManager;
-
 import org.altlinux.xgradle.api.processors.TransitiveProcessor;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * Processes transitive dependencies and categorizes them into main and test scopes.
- * <p>
- * This processor:
- * <ul>
- *   <li>Analyzes the dependency tree to identify transitive relationships</li>
- *   <li>Separates dependencies into main and test contexts</li>
- *   <li>Applies scope management rules</li>
- *   <li>Tracks skipped dependencies</li>
- *   <li>Propagates test context flags through the dependency tree</li>
- * </ul>
+ * Applies test-context markers to root artifacts and delegates transitive traversal to
+ * TransitiveDependencyManager. After traversal, categorizes all discovered artifacts into
+ * main and test sets and exposes skipped dependencies reported by the manager.
  *
- * <p>Works in conjunction with {@link TransitiveDependencyManager} to traverse
- * and process the dependency graph.
+ * The processor is stateful only for the duration of a single process call:
+ * main/test sets are cleared at the beginning of each execution.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class ScopeAwareTransitiveProcessor implements TransitiveProcessor {
+final class ScopeAwareTransitiveProcessor implements TransitiveProcessor {
 
     private final TransitiveDependencyManager transitiveManager;
 
@@ -53,48 +47,10 @@ class ScopeAwareTransitiveProcessor implements TransitiveProcessor {
     private Set<String> testContextDependencies = Collections.emptySet();
 
     @Inject
-    ScopeAwareTransitiveProcessor(
-            TransitiveDependencyManager transitiveManager
-    ) {
+    ScopeAwareTransitiveProcessor(TransitiveDependencyManager transitiveManager) {
         this.transitiveManager = transitiveManager;
     }
 
-    /**
-     * Processes transitive dependencies for all system artifacts.
-     * <p>
-     * Execution flow:
-     * <ol>
-     *   <li>Marks test context dependencies in system artifacts</li>
-     *   <li>Traverses dependency graph using breadth-first search</li>
-     *   <li>Updates dependency scopes based on hierarchy</li>
-     *   <li>Categorizes dependencies into main/test contexts</li>
-     *   <li>Collects skipped dependencies</li>
-     * </ol>
-     *
-     * @param systemArtifacts Resolved system artifacts (key: "groupId:artifactId")
-     */
-    public void process(Map<String, MavenCoordinate> systemArtifacts) {
-        for (MavenCoordinate coord : systemArtifacts.values()) {
-            if (testContextDependencies.contains(coord.getGroupId() + ":" + coord.getArtifactId())) {
-                coord.setTestContext(true);
-            }
-        }
-
-        transitiveManager.configure(systemArtifacts);
-
-        for (Map.Entry<String, MavenCoordinate> entry : systemArtifacts.entrySet()) {
-            MavenCoordinate coord = entry.getValue();
-            if (coord.isTestContext()) {
-                testDependencies.add(entry.getKey());
-            } else {
-                mainDependencies.add(entry.getKey());
-            }
-        }
-    }
-
-    /**
-     * Sets pre-identified test-scoped dependencies for the next {@link #process} call.
-     */
     @Override
     public void setTestContextDependencies(Set<String> testContextDependencies) {
         this.testContextDependencies = (testContextDependencies == null)
@@ -102,29 +58,56 @@ class ScopeAwareTransitiveProcessor implements TransitiveProcessor {
                 : testContextDependencies;
     }
 
-    /**
-     * Gets main-context dependencies after processing.
-     *
-     * @return set of dependency identifiers (format: "groupId:artifactId")
-     */
+    @Override
+    public void process(Map<String, MavenCoordinate> systemArtifacts) {
+        mainDependencies.clear();
+        testDependencies.clear();
+
+        if (systemArtifacts == null || systemArtifacts.isEmpty()) {
+            return;
+        }
+
+        for (Map.Entry<String, MavenCoordinate> entry : systemArtifacts.entrySet()) {
+            String artifactKey = entry.getKey();
+            MavenCoordinate coordinate = entry.getValue();
+
+            if (coordinate == null) {
+                continue;
+            }
+
+            if (testContextDependencies.contains(artifactKey) && !coordinate.isTestContext()) {
+                systemArtifacts.put(
+                        artifactKey,
+                        coordinate.toBuilder()
+                                .testContext(true)
+                                .build()
+                );
+            }
+        }
+
+        transitiveManager.configure(systemArtifacts);
+
+        for (Map.Entry<String, MavenCoordinate> entry : systemArtifacts.entrySet()) {
+            MavenCoordinate coordinate = entry.getValue();
+            if (coordinate != null && coordinate.isTestContext()) {
+                testDependencies.add(entry.getKey());
+            } else {
+                mainDependencies.add(entry.getKey());
+            }
+        }
+    }
+
+    @Override
     public Set<String> getMainDependencies() {
         return mainDependencies;
     }
 
-    /**
-     * Gets test-context dependencies after processing.
-     *
-     * @return set of dependency identifiers (format: "groupId:artifactId")
-     */
+    @Override
     public Set<String> getTestDependencies() {
         return testDependencies;
     }
 
-    /**
-     * Gets dependencies skipped during processing.
-     *
-     * @return set of skipped dependency identifiers (format: "groupId:artifactId")
-     */
+    @Override
     public Set<String> getSkippedDependencies() {
         return transitiveManager.getSkippedDependencies();
     }

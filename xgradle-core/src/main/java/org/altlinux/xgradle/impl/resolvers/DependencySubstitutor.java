@@ -75,7 +75,7 @@ public class DependencySubstitutor {
      */
     public DependencySubstitutor(
             Map<String, Set<String>> requestedVersions,
-            Map<String, MavenCoordinate> systemArtifacts,
+                Map<String, MavenCoordinate> systemArtifacts,
             Map<String, String> managedVersions) {
         this.requestedVersions = requestedVersions;
         this.systemArtifacts = systemArtifacts;

@@ -47,9 +47,9 @@ import java.util.UUID;
  *
  * <p>If the directory is invalid or unreadable, a {@link GradleException} is thrown.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
-class DefaultRepositoryManager implements RepositoryManager {
+final class DefaultRepositoryManager implements RepositoryManager {
 
     private final Logger logger;
 

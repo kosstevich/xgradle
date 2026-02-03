@@ -11,7 +11,7 @@ import org.apache.maven.model.Model;
 import java.nio.file.Path;
 
 @Singleton
-public class DefaultArtifactFactory implements ArtifactFactory {
+public final class DefaultArtifactFactory implements ArtifactFactory {
 
     @Inject
     DefaultArtifactFactory() {}

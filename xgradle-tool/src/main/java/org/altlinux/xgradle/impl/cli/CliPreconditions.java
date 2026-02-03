@@ -9,7 +9,7 @@ import java.util.function.Supplier;
  * Utility class containing precondition checks for CLI execution.
  * Throws {@link CliUsageException} when required conditions are not met.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 public final class CliPreconditions {
 

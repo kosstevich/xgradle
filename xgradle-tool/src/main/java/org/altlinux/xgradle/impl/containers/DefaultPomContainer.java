@@ -29,10 +29,10 @@ import java.util.Set;
  * Default implementation of PomContainer for managing POM file collections.
  * Provides access to all POM files or selected POM files based on artifact names.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas<xeno@altlinux.org>
  */
 @Singleton
-class DefaultPomContainer implements PomContainer {
+final class DefaultPomContainer implements PomContainer {
     private final PomCollector pomCollector;
 
     /**

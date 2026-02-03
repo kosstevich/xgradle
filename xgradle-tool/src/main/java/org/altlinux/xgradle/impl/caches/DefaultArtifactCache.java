@@ -28,7 +28,7 @@ import org.altlinux.xgradle.api.model.ArtifactData;
  * Default implementation of ArtifactCache.
  * Global cache for tracking processed artifacts to prevent duplicates.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
 final class DefaultArtifactCache implements ArtifactCache {

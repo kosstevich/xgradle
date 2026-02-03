@@ -43,13 +43,13 @@ import java.io.File;
  * to provide a complete solution for resolving plugins from local artifacts rather
  * than from remote repositories.</p>
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  * @see RepositoryManager
  * @see PluginProcessor
  * @see SystemDepsExtension#getJarsPath()
  */
 @Singleton
-class DefaultPluginManager  implements PluginManager {
+final class DefaultPluginManager  implements PluginManager {
 
     private final RepositoryManager repositoryManager;
     private final PluginProcessor pluginProcessor;

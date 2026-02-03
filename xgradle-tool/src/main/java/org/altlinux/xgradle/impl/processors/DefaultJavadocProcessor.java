@@ -48,10 +48,10 @@ import java.util.List;
  * Handles processing of Javadoc JAR files and filters duplicates based on groupId:artifactId.
  * Prevents multiple Javadoc artifacts for the same library.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
+final class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
 
     private final ArtifactFactory artifactFactory;
     private final PomParser<HashMap<String, Path>> javadocParser;
@@ -59,14 +59,6 @@ class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
     private final ToolConfig toolConfig;
     private final Logger logger;
 
-    /**
-     * Constructs a new DefaultJavadocProcessor with required dependencies.
-     *
-     * @param javadocParser parser for Javadoc artifacts
-     * @param pomService service for POM processing operations
-     * @param toolConfig configuration for the tool
-     * @param logger logger instance
-     */
     @Inject
     DefaultJavadocProcessor(
             ArtifactFactory artifactFactory,
@@ -82,14 +74,6 @@ class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
         this.logger = logger;
     }
 
-    /**
-     * Processes Javadoc artifacts from the specified directory.
-     * Applies duplicate filtering, artifact exclusion, and snapshot filtering.
-     *
-     * @param searchingDir the directory to search for Javadoc artifacts
-     * @param artifactName optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding Javadoc JAR file paths
-     */
     @Override
     public HashMap<String, Path> pomsFromDirectory(String searchingDir, Optional<List<String>> artifactName) {
         HashMap<String, Path> artifacts = javadocParser.getArtifactCoords(searchingDir, artifactName);
@@ -104,13 +88,6 @@ class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
         return artifacts;
     }
 
-    /**
-     * Filters duplicate artifacts based on groupId:artifactId coordinates.
-     * Ensures only one Javadoc artifact per unique library coordinates.
-     *
-     * @param artifacts map of artifact paths to filter
-     * @return filtered map with unique artifacts by coordinates
-     */
     private HashMap<String, Path> filterDuplicateArtifacts(HashMap<String, Path> artifacts) {
         HashMap<String, Path> filteredArtifacts = new HashMap<>();
         Set<String> processedCoordinates = new HashSet<>();
@@ -147,15 +124,6 @@ class DefaultJavadocProcessor implements PomProcessor<HashMap<String, Path>> {
         return filteredArtifacts;
     }
 
-    /**
-     * Extracts artifact coordinates from POM file.
-     * Reads groupId, artifactId, and version from POM model.
-     *
-     * @param pomPath path to the POM file
-     * @return artifact coordinates or null if extraction fails
-     * @throws IOException if an I/O error occurs during file reading
-     * @throws XmlPullParserException if the POM file cannot be parsed
-     */
     private ArtifactCoordinates extractCoordinatesFromPom(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {

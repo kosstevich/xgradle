@@ -20,25 +20,14 @@ package org.altlinux.xgradle.impl.exceptions;
  * Used to signal that required arguments are missing or inconsistent.
  * Intended to be caught at the application boundary to print usage and return error exit code.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 public final class CliUsageException extends RuntimeException {
 
-    /**
-     * Creates a new exception with the specified message.
-     *
-     * @param message human-readable description of the CLI usage error
-     */
     public CliUsageException(String message) {
         super(message);
     }
 
-    /**
-     * Creates a new exception with the specified message and cause.
-     *
-     * @param message human-readable description of the CLI usage error
-     * @param cause the underlying cause
-     */
     public CliUsageException(String message, Throwable cause) {
         super(message, cause);
     }

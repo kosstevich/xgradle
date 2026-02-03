@@ -33,30 +33,17 @@ import java.nio.file.Path;
  * Default implementation of ArtifactContainer for managing artifact collections.
  * Provides access to artifacts, their paths, and signatures based on processing type.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultArtifactContainer implements ArtifactContainer {
+final class DefaultArtifactContainer implements ArtifactContainer {
     private final ArtifactCollector artifactCollector;
 
-    /**
-     * Constructs a new DefaultArtifactContainer with required dependencies.
-     *
-     * @param artifactCollector collector for retrieving artifacts
-     */
     @Inject
     DefaultArtifactContainer(ArtifactCollector artifactCollector) {
         this.artifactCollector = artifactCollector;
     }
 
-    /**
-     * Retrieves artifacts from the specified directory based on processing type.
-     *
-     * @param searchingDirectory the directory to search for artifacts
-     * @param artifactNames optional list of artifact names to filter by
-     * @param processingType the type of processing (LIBRARY or PLUGINS)
-     * @return map of artifact signatures to file paths
-     */
     @Override
     public HashMap<String, Path> getArtifacts(String searchingDirectory, Optional<List<String>> artifactNames, ProcessingType processingType) {
         if (artifactNames.isPresent()) {
@@ -66,14 +53,6 @@ class DefaultArtifactContainer implements ArtifactContainer {
         }
     }
 
-    /**
-     * Retrieves artifact file paths from the specified directory based on processing type.
-     *
-     * @param searchingDirectory the directory to search for artifacts
-     * @param artifactNames optional list of artifact names to filter by
-     * @param processingType the type of processing (LIBRARY or PLUGINS)
-     * @return collection of artifact file paths
-     */
     @Override
     public Collection<Path> getArtifactPaths(String searchingDirectory, Optional<List<String>> artifactNames, ProcessingType processingType) {
         if (artifactNames.isPresent()) {
@@ -83,14 +62,6 @@ class DefaultArtifactContainer implements ArtifactContainer {
         }
     }
 
-    /**
-     * Retrieves artifact signatures from the specified directory based on processing type.
-     *
-     * @param searchingDirectory the directory to search for artifacts
-     * @param artifactNames optional list of artifact names to filter by
-     * @param processingType the type of processing (LIBRARY or PLUGINS)
-     * @return collection of artifact signatures
-     */
     @Override
     public Collection<String> getArtifactSignatures(String searchingDirectory, Optional<List<String>> artifactNames, ProcessingType processingType) {
         if (artifactNames.isPresent()) {

@@ -34,21 +34,15 @@ import java.util.List;
  * Processes BOM POM files with packaging type "pom" and dependency management sections.
  * Provides artifact exclusion, parent block removal, and snapshot filtering for BOM files.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultBomProcessor implements PomProcessor<Set<Path>> {
+final class DefaultBomProcessor implements PomProcessor<Set<Path>> {
+
     private final PomParser<Set<Path>> pomParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
 
-    /**
-     * Constructs a new DefaultBomProcessor with required dependencies.
-     *
-     * @param pomParser the parser for BOM POM files
-     * @param pomService the service for POM processing operations
-     * @param toolConfig the configuration for the tool
-     */
     @Inject
     DefaultBomProcessor(
             @Bom PomParser<Set<Path>> pomParser,
@@ -60,14 +54,6 @@ class DefaultBomProcessor implements PomProcessor<Set<Path>> {
         this.toolConfig = toolConfig;
     }
 
-    /**
-     * Processes BOM artifacts from the specified directory.
-     * Applies artifact exclusion, parent block removal, and snapshot filtering.
-     *
-     * @param searchingDir the directory to search for BOM files
-     * @param artifactNames optional list of artifact names to filter by
-     * @return set of BOM file paths that match the criteria
-     */
     @Override
     public Set<Path> pomsFromDirectory(String searchingDir, Optional<List<String>> artifactNames) {
         Set<Path> artifacts = getArtifactsFromParser(searchingDir, artifactNames);
@@ -82,14 +68,6 @@ class DefaultBomProcessor implements PomProcessor<Set<Path>> {
         return artifacts;
     }
 
-    /**
-     * Retrieves artifacts from parser based on whether artifact names are specified.
-     * Delegates to appropriate parser method depending on the presence of artifact names.
-     *
-     * @param searchingDir the directory to search for artifacts
-     * @param artifactNames optional list of artifact names to filter by
-     * @return set of artifact paths
-     */
     private Set<Path> getArtifactsFromParser(String searchingDir, Optional<List<String>> artifactNames) {
         if (artifactNames.isPresent()) {
             return pomParser.getArtifactCoords(searchingDir, artifactNames);

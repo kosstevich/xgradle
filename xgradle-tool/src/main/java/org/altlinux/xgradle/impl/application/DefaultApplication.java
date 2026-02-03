@@ -27,7 +27,7 @@ import java.io.FileNotFoundException;
  * Default implementation of {@link Application}.
  * Parses CLI arguments and coordinates controllers execution.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
 final class DefaultApplication implements Application {
@@ -42,18 +42,6 @@ final class DefaultApplication implements Application {
     private final Provider<ArtifactsInstallationController> pluginsController;
     private final Provider<PomRedactionController> pomRedactionController;
 
-    /**
-     * Constructs the application with required dependencies.
-     *
-     * @param jCommander JCommander instance used to parse and print usage
-     * @param cliArgs parsed arguments container
-     * @param logger application logger
-     * @param libraryXmvnController controller for library registration
-     * @param bomXmvnController controller for BOM registration
-     * @param javadocXmvnController controller for Javadoc installation
-     * @param pluginsController controller for plugin artifacts installation
-     * @param pomRedactionController controller for POM redaction operations
-     */
     @Inject
     DefaultApplication(
             JCommander jCommander,
@@ -75,13 +63,6 @@ final class DefaultApplication implements Application {
         this.pomRedactionController = pomRedactionController;
     }
 
-    /**
-     * Runs the application.
-     * Returns an {@link ExitCode} describing the overall result.
-     *
-     * @param args raw command-line arguments
-     * @return resulting exit code
-     */
     @Override
     public ExitCode run(String[] args) {
         try {

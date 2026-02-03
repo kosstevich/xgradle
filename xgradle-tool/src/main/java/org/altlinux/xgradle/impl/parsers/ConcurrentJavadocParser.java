@@ -42,34 +42,20 @@ import java.util.List;
  * Handles parsing of POM files to find corresponding Javadoc JAR files.
  * Uses concurrent processing for improved performance.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
+final class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
 
     private final PomContainer pomContainer;
     private final Logger logger;
 
-    /**
-     * Constructs a new ConcurrentJavadocParser with required dependencies.
-     *
-     * @param pomContainer container for POM file management
-     * @param logger logger instance
-     */
     @Inject
     ConcurrentJavadocParser(PomContainer pomContainer, Logger logger) {
         this.pomContainer = pomContainer;
         this.logger = logger;
     }
 
-    /**
-     * Retrieves Javadoc artifact mappings from the specified directory.
-     * For each POM file, finds the corresponding Javadoc JAR file.
-     *
-     * @param searchingDir the directory to search for POM files
-     * @param artifactNames optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding Javadoc JAR file paths
-     */
     @Override
     public HashMap<String, Path> getArtifactCoords(String searchingDir, Optional<List<String>> artifactNames) {
         Collection<Path> pomPaths;
@@ -97,14 +83,6 @@ class ConcurrentJavadocParser implements PomParser<HashMap<String, Path>> {
         return javadocMap;
     }
 
-    /**
-     * Finds the corresponding Javadoc JAR file for a POM file.
-     *
-     * @param pomPath path to the POM file
-     * @return path to the corresponding Javadoc JAR file, or null if not found
-     * @throws IOException if an I/O error occurs during file reading
-     * @throws XmlPullParserException if the POM file cannot be parsed
-     */
     private Path findJavadocForPom(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {

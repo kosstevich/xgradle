@@ -30,7 +30,7 @@ import java.nio.file.Paths;
 import java.util.List;
 
 @Singleton
-class MavenPomFinder implements PomFinder {
+final class MavenPomFinder implements PomFinder {
 
     private final PomIndex pomIndex;
     private final Logger logger;

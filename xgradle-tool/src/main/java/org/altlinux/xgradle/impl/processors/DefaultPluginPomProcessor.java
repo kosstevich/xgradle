@@ -35,21 +35,15 @@ import java.util.List;
  * and snapshot filtering capabilities.
  * Specifically designed for Gradle plugin installation scenarios.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, Path>> {
+final class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, Path>> {
+
     private final PomParser<HashMap<String, Path>> pluginsParser;
     private final PomService pomService;
     private final ToolConfig toolConfig;
 
-    /**
-     * Constructs a new DefaultPluginPomProcessor with required dependencies.
-     *
-     * @param pluginsParser the parser for plugin POM files
-     * @param pomService the service for POM processing operations
-     * @param toolConfig the configuration for the tool
-     */
     @Inject
     DefaultPluginPomProcessor(
             @GradlePlugin PomParser<HashMap<String, Path>> pluginsParser,
@@ -61,14 +55,6 @@ class DefaultPluginPomProcessor implements PomProcessor<HashMap<String, Path>> {
         this.toolConfig = toolConfig;
     }
 
-    /**
-     * Processes plugin artifacts from the specified directory.
-     * Applies artifact exclusion and snapshot filtering for Gradle plugins.
-     *
-     * @param searchingDir the directory to search for plugin artifacts
-     * @param artifactNames optional list of artifact names to filter by
-     * @return map of POM file paths to corresponding JAR file paths
-     */
     @Override
     public HashMap<String, Path> pomsFromDirectory(String searchingDir, Optional<List<String>> artifactNames) {
         HashMap<String, Path> artifacts = pluginsParser.getArtifactCoords(searchingDir, artifactNames);

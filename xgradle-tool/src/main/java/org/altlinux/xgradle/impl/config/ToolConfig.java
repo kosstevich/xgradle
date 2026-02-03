@@ -24,16 +24,11 @@ import java.util.Objects;
  * Configuration class for the XGradle tool.
  * Provides access to tool configuration parameters from command-line arguments.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
-public class ToolConfig {
+public final class ToolConfig {
     private final CliArgumentsContainer arguments;
 
-    /**
-     * Constructs a new ToolConfig with the specified arguments' container.
-     *
-     * @param arguments container for command-line arguments
-     */
     public ToolConfig(CliArgumentsContainer arguments) {
 
         Objects.requireNonNull(arguments, "Cli arguments can not be null");
@@ -41,38 +36,18 @@ public class ToolConfig {
         this.arguments = arguments;
     }
 
-    /**
-     * Gets the list of excluded artifacts.
-     *
-     * @return list of artifact patterns to exclude
-     */
     public List<String> getExcludedArtifacts() {
         return arguments.getExcludedArtifact();
     }
 
-    /**
-     * Checks if snapshot artifacts are allowed.
-     *
-     * @return true if snapshot artifacts are allowed, false otherwise
-     */
     public boolean isAllowSnapshots() {
         return arguments.hasAllowSnapshots();
     }
 
-    /**
-     * Gets the list of POM files for which to remove parent blocks.
-     *
-     * @return list of POM patterns for parent removal
-     */
     public List<String> getRemoveParentPoms() {
         return arguments.getRemoveParentPoms();
     }
 
-    /**
-     * Gets the installation prefix to strip from paths.
-     *
-     * @return install prefix string or null if not specified
-     */
     public String getInstallPrefix() {
         return arguments.getInstallPrefix();
     }

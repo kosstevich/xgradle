@@ -1,13 +1,42 @@
+/*
+ * Copyright 2025 BaseALT Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.altlinux.xgradle.impl.resolution;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
 import org.altlinux.xgradle.api.configurators.ArtifactConfigurator;
+import org.altlinux.xgradle.api.resolution.ResolutionReporter;
+import org.altlinux.xgradle.impl.resolvers.DependencySubstitutor;
 import org.altlinux.xgradle.impl.utils.logging.DependencyLogger;
+
 import org.gradle.api.logging.Logger;
 
+/**
+ * Reports resolution results for the current build.
+ *
+ * The reporter prints initial dependencies, resolved system artifacts,
+ * test context dependencies, configured artifacts, and skipped items.
+ * If substitutions were configured, it also reports substitution actions
+ * when the task graph becomes ready.
+ *
+ * @author Ivan Khanas <xeno@altlinux.org>
+ */
 @Singleton
-class DefaultResolutionReporter implements ResolutionReporter {
+final class DefaultResolutionReporter implements ResolutionReporter {
 
     private final ArtifactConfigurator artifactConfigurator;
 
@@ -18,34 +47,39 @@ class DefaultResolutionReporter implements ResolutionReporter {
 
     @Override
     public void report(ResolutionContext resolutionContext) {
-        Logger logger = resolutionContext.gradle.getRootProject().getLogger();
+        Logger logger = resolutionContext.getGradle().getRootProject().getLogger();
         DependencyLogger depLogger = new DependencyLogger();
 
         depLogger.logSection("\n===== APPLYING SYSTEM DEPENDENCY VERSIONS =====", logger);
         depLogger.logSection("Initial dependencies", logger);
-        depLogger.logInitialDependencies(resolutionContext.projectDeps, logger);
+        depLogger.logInitialDependencies(resolutionContext.getProjectDependencies(), logger);
 
         depLogger.logSection("Resolved system artifacts", logger);
-        depLogger.logResolvedArtifacts(resolutionContext.systemArtifacts, logger);
+        depLogger.logResolvedArtifacts(resolutionContext.getSystemArtifacts(), logger);
 
-        depLogger.logSection("Test resolutionContext dependencies", logger);
-        depLogger.logTestContextDependencies(resolutionContext.testContextDependencies, logger);
+        depLogger.logSection("Test context dependencies", logger);
+        depLogger.logTestContextDependencies(resolutionContext.getTestContextDependencies(), logger);
 
         depLogger.logSection("===== DEPENDENCY RESOLUTION COMPLETED =====", logger);
         depLogger.logSection("Added artifacts to configurations", logger);
         depLogger.logConfigurationArtifacts(artifactConfigurator.getConfigurationArtifacts(), logger);
 
-        if (!resolutionContext.notFound.isEmpty() || !resolutionContext.skipped.isEmpty()) {
+        if (!resolutionContext.getNotFound().isEmpty() || !resolutionContext.getSkipped().isEmpty()) {
             depLogger.logSection("Skipped dependencies", logger);
-            depLogger.logSkippedDependencies(resolutionContext.notFound, resolutionContext.skipped, logger);
+            depLogger.logSkippedDependencies(
+                    resolutionContext.getNotFound(),
+                    resolutionContext.getSkipped(),
+                    logger
+            );
         }
 
-        if (resolutionContext.substitutor != null) {
-            resolutionContext.gradle.getTaskGraph().whenReady(taskGraph -> {
+        DependencySubstitutor substitutor = resolutionContext.getSubstitutor();
+        if (substitutor != null) {
+            resolutionContext.getGradle().getTaskGraph().whenReady(taskGraph -> {
                 depLogger.logSection("Dependency substitutions", logger);
                 depLogger.logSubstitutions(
-                        resolutionContext.substitutor.getOverrideLogs(),
-                        resolutionContext.substitutor.getApplyLogs(),
+                        substitutor.getOverrideLogs(),
+                        substitutor.getApplyLogs(),
                         logger
                 );
             });

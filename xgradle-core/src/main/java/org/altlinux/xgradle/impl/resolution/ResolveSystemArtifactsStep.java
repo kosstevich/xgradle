@@ -1,9 +1,34 @@
+/*
+ * Copyright 2025 BaseALT Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.altlinux.xgradle.impl.resolution;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+
+import org.altlinux.xgradle.api.resolution.ResolutionStep;
 import org.altlinux.xgradle.api.resolvers.ArtifactResolver;
 
+/**
+ * Resolves system artifacts for the current build based on collected dependencies.
+ *
+ * The step delegates artifact resolution to ArtifactResolver, then stores
+ * resolved artifacts and not-found dependency keys into ResolutionContext.
+ *
+ * @author Ivan Khanas <xeno@altlinux.org>
+ */
 @Singleton
 final class ResolveSystemArtifactsStep implements ResolutionStep {
 
@@ -21,9 +46,16 @@ final class ResolveSystemArtifactsStep implements ResolutionStep {
 
     @Override
     public void execute(ResolutionContext resolutionContext) {
-        artifactResolver.resolve(resolutionContext.allDeps, resolutionContext.gradle.getRootProject().getLogger());
+        artifactResolver.resolve(
+                resolutionContext.getAllDependencies(),
+                resolutionContext.getGradle().getRootProject().getLogger()
+        );
         artifactResolver.filter();
-        resolutionContext.systemArtifacts = artifactResolver.getSystemArtifacts();
-        resolutionContext.notFound = artifactResolver.getNotFoundDependencies();
+
+        resolutionContext.getSystemArtifacts().clear();
+        resolutionContext.getSystemArtifacts().putAll(artifactResolver.getSystemArtifacts());
+
+        resolutionContext.getNotFound().clear();
+        resolutionContext.getNotFound().addAll(artifactResolver.getNotFoundDependencies());
     }
 }

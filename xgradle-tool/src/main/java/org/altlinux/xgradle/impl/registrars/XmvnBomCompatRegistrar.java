@@ -41,24 +41,16 @@ import java.util.Set;
  * Registrar implementation for XMvn compatibility with BOM artifacts.
  * Handles registration of BOM files using XMvn commands.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class XmvnBomCompatRegistrar implements Registrar {
+final class XmvnBomCompatRegistrar implements Registrar {
 
     private final PomProcessor<Set<Path>> pomProcessor;
     private final CommandExecutor commandExecutor;
     private final CommandLineParser commandLineParser;
     private final Logger logger;
 
-    /**
-     * Constructs a new DefaultXmvnBomCompatRegistrar with required dependencies.
-     *
-     * @param pomProcessor processor for BOM POM files
-     * @param commandExecutor executor for command execution
-     * @param commandLineParser parser for command-line parsing
-     * @param logger logger instance
-     */
     @Inject
     XmvnBomCompatRegistrar(
             @Bom PomProcessor<Set<Path>> pomProcessor,
@@ -72,14 +64,6 @@ class XmvnBomCompatRegistrar implements Registrar {
         this.logger = logger;
     }
 
-    /**
-     * Registers BOM artifacts from the specified directory using XMvn commands.
-     *
-     * @param searchingDir the directory to search for BOM files
-     * @param command the XMvn registration command to use
-     * @param artifactName optional list of artifact names to filter by
-     * @throws RuntimeException if command execution fails
-     */
     @Override
     public void registerArtifacts(String searchingDir, String command, Optional<List<String>> artifactName) {
         Set<Path> artifacts;

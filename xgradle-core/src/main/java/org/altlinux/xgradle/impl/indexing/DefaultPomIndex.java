@@ -1,49 +1,25 @@
-/*
- * Copyright 2025 BaseALT Ltd
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.altlinux.xgradle.impl.indexing;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-
 import org.altlinux.xgradle.api.collectors.PomFilesCollector;
 import org.altlinux.xgradle.api.indexing.PomIndex;
 import org.altlinux.xgradle.api.parsers.PomParser;
 import org.altlinux.xgradle.impl.model.MavenCoordinate;
-
 import org.gradle.api.logging.Logger;
-import org.gradle.util.internal.VersionNumber;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Singleton
-class DefaultPomIndex implements PomIndex {
+final class DefaultPomIndex implements PomIndex {
 
     private final PomFilesCollector pomFilesCollector;
     private final PomParser pomParser;
     private final Logger logger;
 
-    private volatile Map<String, MavenCoordinate> latestByGa = Collections.emptyMap();
-    private volatile Map<String, List<MavenCoordinate>> byGroup = Collections.emptyMap();
+    private volatile Map<String, MavenCoordinate> byGa = new LinkedHashMap<>();
+    private volatile Map<String, List<MavenCoordinate>> byGroup = new LinkedHashMap<>();
 
     @Inject
     DefaultPomIndex(PomFilesCollector pomFilesCollector, PomParser pomParser, Logger logger) {
@@ -53,97 +29,91 @@ class DefaultPomIndex implements PomIndex {
     }
 
     @Override
-    public void build(Path rootDirectory) {
-        if (rootDirectory == null || !Files.isDirectory(rootDirectory)) {
-            logger.lifecycle("POM root directory is not valid: {}", rootDirectory);
-            latestByGa = Collections.emptyMap();
-            byGroup = Collections.emptyMap();
-            return;
-        }
+    public synchronized void build(Path rootDirectory) {
+        List<Path> files = pomFilesCollector.collect(rootDirectory);
+        build(files);
+    }
 
-        List<Path> pomFiles = pomFilesCollector.collect(rootDirectory);
-
-        Map<String, MavenCoordinate> latest = new HashMap<>();
-        Map<String, List<MavenCoordinate>> groups = new HashMap<>();
+    @Override
+    public synchronized void build(List<Path> pomFiles) {
+        Map<String, MavenCoordinate> newByGa = new LinkedHashMap<>();
+        Map<String, List<MavenCoordinate>> newByGroup = new LinkedHashMap<>();
 
         for (Path pomPath : pomFiles) {
-            MavenCoordinate coord;
-            try {
-                coord = pomParser.parsePom(pomPath);
-            } catch (RuntimeException e) {
-                logger.lifecycle("Failed to parse POM {}: {}", pomPath, e.getMessage());
+            MavenCoordinate coord = pomParser.parsePom(pomPath);
+            if (coord == null) {
                 continue;
             }
-
-            if (coord == null || coord.getGroupId() == null || coord.getArtifactId() == null) {
-                continue;
-            }
-
-            if (coord.getPomPath() == null) {
-                coord.setPomPath(pomPath);
-            }
-
-            groups.computeIfAbsent(coord.getGroupId(), k -> new ArrayList<>()).add(coord);
 
             String ga = coord.getGroupId() + ":" + coord.getArtifactId();
-            latest.compute(ga, (k, prev) -> chooseLatest(prev, coord));
+
+            MavenCoordinate prev = newByGa.get(ga);
+            if (prev == null || isNewer(coord.getVersion(), prev.getVersion())) {
+                newByGa.put(ga, coord);
+            }
+
+            newByGroup.computeIfAbsent(coord.getGroupId(), k -> new ArrayList<>()).add(coord);
         }
 
-        Map<String, List<MavenCoordinate>> frozenGroups = new HashMap<>();
-        for (Map.Entry<String, List<MavenCoordinate>> e : groups.entrySet()) {
-            frozenGroups.put(e.getKey(), Collections.unmodifiableList(e.getValue()));
+        for (Map.Entry<String, List<MavenCoordinate>> e : newByGroup.entrySet()) {
+            e.getValue().sort(Comparator.comparing(MavenCoordinate::getArtifactId)
+                    .thenComparing(MavenCoordinate::getVersion, this::compareVersions));
         }
 
-        latestByGa = Collections.unmodifiableMap(latest);
-        byGroup = Collections.unmodifiableMap(frozenGroups);
+        byGa = newByGa;
+        byGroup = newByGroup;
+
+        logger.lifecycle("POM index built: {} artifacts, {} groups", byGa.size(), byGroup.size());
     }
 
     @Override
     public Optional<MavenCoordinate> find(String groupId, String artifactId) {
-        if (groupId == null || artifactId == null) {
-            return Optional.empty();
-        }
-        return Optional.ofNullable(latestByGa.get(groupId + ":" + artifactId));
+        return Optional.ofNullable(byGa.get(groupId + ":" + artifactId));
     }
 
     @Override
     public List<MavenCoordinate> findAllForGroup(String groupId) {
-        if (groupId == null) {
-            return Collections.emptyList();
-        }
-        return byGroup.getOrDefault(groupId, Collections.emptyList());
+        return byGroup.getOrDefault(groupId, List.of());
     }
 
     @Override
     public Map<String, MavenCoordinate> snapshot() {
-        return latestByGa;
+        return Collections.unmodifiableMap(byGa);
     }
 
-    private MavenCoordinate chooseLatest(MavenCoordinate a, MavenCoordinate b) {
-        if (a == null) return b;
-        if (b == null) return a;
-
-        String av = a.getVersion();
-        String bv = b.getVersion();
-
-        if (av == null || av.isBlank()) return b;
-        if (bv == null || bv.isBlank()) return a;
-
-        VersionNumber an = tryParse(av);
-        VersionNumber bn = tryParse(bv);
-
-        if (an != null && bn != null) {
-            return an.compareTo(bn) >= 0 ? a : b;
-        }
-
-        return av.compareTo(bv) >= 0 ? a : b;
+    private boolean isNewer(String a, String b) {
+        return compareVersions(a, b) > 0;
     }
 
-    private VersionNumber tryParse(String v) {
-        try {
-            return VersionNumber.parse(v);
-        } catch (RuntimeException e) {
-            return null;
+    private int compareVersions(String a, String b) {
+        if (a == null && b == null) return 0;
+        if (a == null) return -1;
+        if (b == null) return 1;
+        String[] pa = a.split("[.-]");
+        String[] pb = b.split("[.-]");
+        int n = Math.max(pa.length, pb.length);
+        for (int i = 0; i < n; i++) {
+            String sa = i < pa.length ? pa[i] : "0";
+            String sb = i < pb.length ? pb[i] : "0";
+            int cmp = comparePart(sa, sb);
+            if (cmp != 0) return cmp;
         }
+        return 0;
+    }
+
+    private int comparePart(String a, String b) {
+        boolean na = a.chars().allMatch(Character::isDigit);
+        boolean nb = b.chars().allMatch(Character::isDigit);
+
+        if (na && nb) {
+            int ia = Integer.parseInt(a);
+            int ib = Integer.parseInt(b);
+            return Integer.compare(ia, ib);
+        }
+
+        if (na) return 1;
+        if (nb) return -1;
+
+        return a.compareTo(b);
     }
 }

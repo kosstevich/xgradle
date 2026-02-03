@@ -41,9 +41,9 @@ import java.util.*;
  * <p>Note: This collector does not attempt to resolve dependencies. It works
  * purely on declared metadata within Gradle configurations.</p>
  *
- * @author Ivan Knanas
+ * @author Ivan Knanas <xeno@altlinux.org>
  */
-class DefaultDependencyCollector implements DependencyCollector {
+final class DefaultDependencyCollector implements DependencyCollector {
     private final Map<String, Set<String>> requestedVersions = new HashMap<>();
     private final Set<String> dependencies = new LinkedHashSet<>();
 

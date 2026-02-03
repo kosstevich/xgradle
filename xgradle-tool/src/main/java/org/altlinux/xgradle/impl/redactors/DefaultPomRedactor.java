@@ -42,7 +42,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
-class DefaultPomRedactor implements PomRedactor {
+final class DefaultPomRedactor implements PomRedactor {
 
     private final Logger logger;
 

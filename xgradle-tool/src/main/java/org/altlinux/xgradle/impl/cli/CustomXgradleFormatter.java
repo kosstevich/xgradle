@@ -26,9 +26,9 @@ import java.util.List;
  * Custom usage formatter for JCommander command-line parsing.
  * Provides formatted help output with usage examples and parameter descriptions.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
-public class CustomXgradleFormatter implements IUsageFormatter {
+public final class CustomXgradleFormatter implements IUsageFormatter {
     private final JCommander commander;
 
     /**

@@ -37,7 +37,7 @@ import static org.altlinux.xgradle.impl.utils.ui.Painter.green;
  * Performs breadth-first traversal of dependency trees while handling
  * scope filtering and version placeholder resolution.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
 class DefaultTransitiveDependencyManager implements TransitiveDependencyManager {
@@ -108,7 +108,12 @@ class DefaultTransitiveDependencyManager implements TransitiveDependencyManager 
                     systemArtifacts.put(depKey, resolvedDep);
                 }
 
-                resolvedDep.setTestContext(current.isTestContext());
+                resolvedDep = resolvedDep.toBuilder()
+                        .testContext(current.isTestContext())
+                        .build();
+
+                systemArtifacts.put(depKey, resolvedDep);
+
 
                 if (!processedArtifacts.contains(depKey)) {
                     processedArtifacts.add(depKey);

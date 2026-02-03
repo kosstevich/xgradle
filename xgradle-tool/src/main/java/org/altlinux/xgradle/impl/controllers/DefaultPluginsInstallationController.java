@@ -17,32 +17,18 @@ import static org.altlinux.xgradle.impl.cli.CliPreconditions.require;
  * Controller for managing Gradle plugin installation process.
  * Validates required CLI parameters and delegates installation to {@link ArtifactsInstaller}.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPluginsInstallationController implements ArtifactsInstallationController {
+final class DefaultPluginsInstallationController implements ArtifactsInstallationController {
 
     private final ArtifactsInstaller pluginArtifactsInstaller;
 
-    /**
-     * Constructs a new controller.
-     *
-     * @param pluginArtifactsInstaller installer for plugin artifacts
-     */
     @Inject
     DefaultPluginsInstallationController(ArtifactsInstaller pluginArtifactsInstaller) {
         this.pluginArtifactsInstaller = pluginArtifactsInstaller;
     }
 
-    /**
-     * Configures plugin artifacts installation based on command-line arguments.
-     * If installation is requested but required parameters are missing, throws a CLI usage exception.
-     *
-     * @param jCommander command-line parser (not used on success path)
-     * @param args raw command-line args (not used)
-     * @param arguments parsed CLI arguments container
-     * @param logger logger instance (not used on success path)
-     */
     @Override
     public void configurePluginArtifactsInstallation(
             JCommander jCommander,

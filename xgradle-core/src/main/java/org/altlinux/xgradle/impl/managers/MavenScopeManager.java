@@ -34,7 +34,7 @@ import java.util.Map;
  * - PROVIDED
  * - TEST
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
 class MavenScopeManager implements ScopeManager {

@@ -48,7 +48,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Ivan Khanas
  */
-class MavenPomHierarchyLoader implements PomHierarchyLoader {
+final class MavenPomHierarchyLoader implements PomHierarchyLoader {
     private final Map<String, Model> modelCache = new ConcurrentHashMap<>();
     private final DefaultModelReader modelReader = new DefaultModelReader();
 

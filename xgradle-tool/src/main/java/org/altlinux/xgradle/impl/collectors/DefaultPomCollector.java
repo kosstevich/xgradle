@@ -32,18 +32,11 @@ import java.util.stream.Stream;
  * Default implementation of PomCollector for collecting POM files from directories.
  * Provides functionality to collect all POM files or selected POM files based on artifact names.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-class DefaultPomCollector implements PomCollector {
+final class DefaultPomCollector implements PomCollector {
 
-    /**
-     * Collects all POM files from the specified directory and its subdirectories.
-     *
-     * @param searchingDir the directory to search for POM files
-     * @return set of all found POM file paths
-     * @throws RuntimeException if an I/O error occurs during file walking
-     */
     @Override
     public Set<Path> collectAll(String searchingDir) {
         Set<Path> result = new HashSet<>();
@@ -57,14 +50,6 @@ class DefaultPomCollector implements PomCollector {
         return result;
     }
 
-    /**
-     * Collects selected POM files from the specified directory based on artifact names.
-     *
-     * @param searchingDir the directory to search for POM files
-     * @param artifactNames list of artifact names to filter by
-     * @return set of filtered POM file paths
-     * @throws RuntimeException if an I/O error occurs during file walking
-     */
     @Override
     public Set<Path> collectSelected(String searchingDir, List<String> artifactNames) {
 

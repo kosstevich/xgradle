@@ -23,7 +23,7 @@ import java.util.Objects;
  * Represents Maven artifact coordinates (groupId, artifactId, version).
  * Used to uniquely identify artifacts and prevent duplicates.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 final class DefaultArtifactCoordinates implements ArtifactCoordinates {
 

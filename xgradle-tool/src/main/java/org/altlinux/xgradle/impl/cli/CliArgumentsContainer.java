@@ -28,7 +28,7 @@ import java.util.Optional;
  * Container for command-line arguments using JCommander annotations.
  * Defines and manages all supported command-line parameters.
  *
- * @author IvanKhanas
+ * @author IvanKhanas <xeno@altlinux.org>
  */
 @Parameters(separators = "=")
 @Singleton

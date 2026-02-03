@@ -21,7 +21,7 @@ import org.gradle.api.attributes.Attribute;
 
 import java.util.Locale;
 
-public class ConfigurationInfo {
+public final class ConfigurationInfo {
 
     private static final Attribute<String> USAGE_ATTRIBUTE =
             Attribute.of("org.gradle.usage", String.class);
