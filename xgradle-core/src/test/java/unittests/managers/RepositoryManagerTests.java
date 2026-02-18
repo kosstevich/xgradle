@@ -44,6 +44,7 @@ import org.gradle.testfixtures.ProjectBuilder;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -104,7 +105,7 @@ class RepositoryManagerTests {
         Project project = ProjectBuilder.builder().build();
         RepositoryHandler repos = project.getRepositories();
 
-        manager.configureDependenciesRepository(repos, base.toFile());
+        manager.configureDependenciesRepository(repos, List.of(base.toFile()));
 
         assertEquals(1, repos.size());
         assertTrue(repos.get(0) instanceof FlatDirectoryArtifactRepository);
@@ -135,7 +136,7 @@ class RepositoryManagerTests {
         Project project = ProjectBuilder.builder().build();
         RepositoryHandler repos = project.getRepositories();
 
-        assertThrows(GradleException.class, () -> manager.configureDependenciesRepository(repos, file.toFile()));
+        assertThrows(GradleException.class, () -> manager.configureDependenciesRepository(repos, List.of(file.toFile())));
     }
 
     @Test
@@ -168,7 +169,7 @@ class RepositoryManagerTests {
         );
 
         RepositoryManager manager = injector.getInstance(RepositoryManager.class);
-        manager.configurePluginsRepository(settings, base.toFile());
+        manager.configurePluginsRepository(settings, List.of(base.toFile()));
 
         verify(repos).flatDir(any(Action.class));
         verify(flatRepo).setName("SystemPluginsRepo");

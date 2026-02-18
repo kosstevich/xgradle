@@ -23,6 +23,7 @@ import org.altlinux.xgradle.interfaces.resolution.ResolutionStep;
 import org.altlinux.xgradle.impl.extensions.SystemDepsExtension;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * Configures the system dependency repository for all projects in the build.
@@ -47,10 +48,11 @@ final class ConfigureSystemRepositoryStep implements ResolutionStep {
 
     @Override
     public void execute(ResolutionContext ctx) {
+        List<File> baseDirs = SystemDepsExtension.getJarsPaths();
         ctx.getGradle().allprojects(project ->
                 repositoryManager.configureDependenciesRepository(
                         project.getRepositories(),
-                        new File(SystemDepsExtension.getJarsPath())
+                        baseDirs
                 )
         );
     }

@@ -46,7 +46,11 @@ final class MavenPomFinder implements PomFinder {
         this.pomIndex = pomIndex;
         this.logger = logger;
 
-        Path root = Paths.get(SystemDepsExtension.getPomsPath());
+        String pomsPath = SystemDepsExtension.getPomsPath();
+        if (pomsPath == null || pomsPath.isBlank()) {
+            return;
+        }
+        Path root = Paths.get(pomsPath);
         try {
             this.pomIndex.build(root);
         } catch (RuntimeException e) {

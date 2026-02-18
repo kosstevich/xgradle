@@ -16,6 +16,7 @@
 package org.altlinux.xgradle.impl.managers;
 
 import com.google.inject.Inject;
+import org.altlinux.xgradle.impl.utils.config.XGradleConfig;
 import org.altlinux.xgradle.interfaces.managers.RepositoryManager;
 
 import org.gradle.api.GradleException;
@@ -26,9 +27,12 @@ import org.gradle.api.logging.Logger;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Manages the addition of system-level dependency repositories to a Gradle build.
@@ -38,6 +42,9 @@ import java.util.UUID;
  */
 final class DefaultRepositoryManager implements RepositoryManager {
 
+    private static final String SCAN_DEPTH_KEY = "xgradle.scan.depth";
+    private static final int DEFAULT_SCAN_DEPTH = 3;
+
     private final Logger logger;
 
     @Inject
@@ -45,8 +52,15 @@ final class DefaultRepositoryManager implements RepositoryManager {
         this.logger = logger;
     }
 
-    public void configurePluginsRepository(Settings settings, File baseDir) {
-        List<File> dirs = scanDirectories(baseDir);
+    public void configurePluginsRepository(Settings settings, List<File> baseDirs) {
+        List<File> validDirs = getValidDirectories(baseDirs);
+        if (validDirs.isEmpty()) {
+            if (logger != null) {
+                logger.warn("No valid system jars directories for plugin repositories");
+            }
+            return;
+        }
+        List<File> dirs = scanDirectories(validDirs);
         settings.getPluginManagement().getRepositories().flatDir(repo -> {
             repo.setName("SystemPluginsRepo");
             dirs.forEach(repo::dir);
@@ -54,45 +68,74 @@ final class DefaultRepositoryManager implements RepositoryManager {
         });
     }
 
-    public void configureDependenciesRepository(RepositoryHandler repos, File libDir) {
-        validateDirectory(libDir);
+    public void configureDependenciesRepository(RepositoryHandler repos, List<File> baseDirs) {
+        List<File> validDirs = requireValidDirectories(baseDirs);
 
         String repoName = "SystemDepsRepo" + UUID.randomUUID();
-        FlatDirectoryArtifactRepository flatRepo = createFlatRepository(repos, repoName, libDir);
+        FlatDirectoryArtifactRepository flatRepo = createFlatRepository(repos, repoName, validDirs);
 
         repos.remove(flatRepo);
         repos.addFirst(flatRepo);
     }
 
-    private List<File> scanDirectories(File baseDir) {
-        List<File> allDirs = new ArrayList<>(List.of(baseDir));
-        try {
-            Files.walk(baseDir.toPath(), 3)
-                    .filter(Files::isDirectory)
-                    .filter(path -> !path.equals(baseDir.toPath()))
-                    .forEach(path -> allDirs.add(path.toFile()));
-        } catch (Exception e) {
-            if (logger != null) {
-                logger.error("Directory scan error: {}", e.getMessage());
+    private List<File> scanDirectories(List<File> baseDirs) {
+        LinkedHashSet<File> allDirs = new LinkedHashSet<>();
+        int scanDepth = XGradleConfig.getIntProperty(SCAN_DEPTH_KEY, DEFAULT_SCAN_DEPTH);
+        for (File baseDir : baseDirs) {
+            File root = baseDir.getAbsoluteFile();
+            Path basePath = root.toPath();
+            allDirs.add(root);
+            try (Stream<Path> pathStream = Files.walk(basePath, scanDepth)) {
+                pathStream.filter(Files::isDirectory)
+                        .filter(path -> !path.equals(basePath))
+                        .forEach(path -> allDirs.add(path.toFile()));
+            } catch (Exception e) {
+                if (logger != null) {
+                    logger.error("Directory scan error: {}", e.getMessage());
+                }
             }
         }
-        return allDirs;
+        return new ArrayList<>(allDirs);
     }
 
-    private void validateDirectory(File dir) {
-        if (!dir.canRead() || !dir.isDirectory()) {
-            throw new GradleException("Invalid lib directory: " + dir.getAbsolutePath());
+    private List<File> getValidDirectories(List<File> baseDirs) {
+        if (baseDirs == null || baseDirs.isEmpty()) {
+            return List.of();
         }
+        List<File> validDirs = new ArrayList<>();
+        List<File> invalidDirs = new ArrayList<>();
+        for (File dir : baseDirs) {
+            if (dir != null && dir.isDirectory() && dir.canRead()) {
+                validDirs.add(dir);
+            } else {
+                invalidDirs.add(dir);
+            }
+        }
+        if (!invalidDirs.isEmpty() && logger != null) {
+            logger.warn("Skipping invalid lib directories: {}", invalidDirs);
+        }
+        return validDirs;
+    }
+
+    private List<File> requireValidDirectories(List<File> baseDirs) {
+        List<File> validDirs = getValidDirectories(baseDirs);
+        if (!validDirs.isEmpty()) {
+            return validDirs;
+        }
+        if (baseDirs == null || baseDirs.isEmpty()) {
+            throw new GradleException("java.library.dir is not set or empty");
+        }
+        throw new GradleException("No valid lib directories found in java.library.dir: " + baseDirs);
     }
 
     private FlatDirectoryArtifactRepository createFlatRepository(
             RepositoryHandler repos,
             String repoName,
-            File libDir
+            List<File> baseDirs
     ) {
         return repos.flatDir(repo -> {
             repo.setName(repoName);
-            List<File> allDirs = scanDirectories(libDir);
+            List<File> allDirs = scanDirectories(baseDirs);
             allDirs.forEach(repo::dir);
             if (logger != null) {
                 logger.info("Configured DependencyManagement repository with {} directories", allDirs.size());

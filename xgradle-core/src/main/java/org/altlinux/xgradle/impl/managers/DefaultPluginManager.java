@@ -27,6 +27,8 @@ import org.gradle.api.initialization.Settings;
 import org.gradle.api.logging.Logger;
 
 import java.io.File;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Manages the configuration of plugin resolution for Gradle builds.
@@ -49,13 +51,28 @@ final class DefaultPluginManager  implements PluginManager {
     }
 
     public void configure(Settings settings) {
-        File baseDir = new File(SystemDepsExtension.getJarsPath());
-
-        if (baseDir.exists() & baseDir.isDirectory()) {
-            repositoryManager.configurePluginsRepository(settings, baseDir);
-            pluginProcessor.process(settings);
-        }else {
-            logger.warn("System jars directory does not exist or is not a directory {}", baseDir);
+        List<File> baseDirs = SystemDepsExtension.getJarsPaths();
+        if (baseDirs.isEmpty()) {
+            return;
         }
+
+        List<File> validDirs = baseDirs.stream()
+                .filter(dir -> dir != null && dir.isDirectory() && dir.canRead())
+                .collect(Collectors.toList());
+
+        if (validDirs.isEmpty()) {
+            logger.warn("System jars directories do not exist or are not readable: {}", baseDirs);
+            return;
+        }
+
+        if (validDirs.size() != baseDirs.size()) {
+            List<File> invalidDirs = baseDirs.stream()
+                    .filter(dir -> dir == null || !dir.isDirectory() || !dir.canRead())
+                    .collect(Collectors.toList());
+            logger.warn("Skipping invalid system jars directories: {}", invalidDirs);
+        }
+
+        repositoryManager.configurePluginsRepository(settings, validDirs);
+        pluginProcessor.process(settings);
     }
 }

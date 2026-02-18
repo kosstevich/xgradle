@@ -20,6 +20,7 @@ import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.initialization.Settings;
 
 import java.io.File;
+import java.util.List;
 /**
   * Manages repository.
 
@@ -33,11 +34,11 @@ public interface RepositoryManager {
 
  */
 
-    void configurePluginsRepository(Settings settings, File baseDir);
+    void configurePluginsRepository(Settings settings, List<File> baseDirs);
 /**
   * Configures dependencies repository.
 
  */
 
-    void configureDependenciesRepository(RepositoryHandler repositories, File baseDir);
+    void configureDependenciesRepository(RepositoryHandler repositories, List<File> baseDirs);
 }

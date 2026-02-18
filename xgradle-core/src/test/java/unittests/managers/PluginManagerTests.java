@@ -34,7 +34,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.io.File;
 import java.nio.file.Path;
 
 import static org.mockito.Mockito.*;
@@ -88,7 +87,7 @@ class PluginManagerTests {
 
             verify(repoManager).configurePluginsRepository(eq(settings), any());
             verify(pluginProcessor).process(settings);
-            verify(logger, never()).warn(anyString(), any(File.class));
+            verify(logger, never()).warn(anyString(), (Object) any());
         } finally {
             if (prev != null) {
                 System.setProperty("java.library.dir", prev);
@@ -120,7 +119,7 @@ class PluginManagerTests {
             PluginManager manager = injector.getInstance(PluginManager.class);
             manager.configure(settings);
 
-            verify(logger).warn(startsWith("System jars directory does not exist"), any(File.class));
+            verify(logger).warn(startsWith("System jars directories do not exist"), (Object) any());
             verifyNoInteractions(repoManager, pluginProcessor);
         } finally {
             if (prev != null) {

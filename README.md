@@ -73,7 +73,7 @@ Build the project with Gradle:
 
 ```
 gradle build \
-  -Djava.library.dir=/path/to/jars \
+  -Djava.library.dir=/path/to/jars1,/path/to/jars2 \
   -Dmaven.poms.dir=/path/to/poms \
   -Prelease
 ```
