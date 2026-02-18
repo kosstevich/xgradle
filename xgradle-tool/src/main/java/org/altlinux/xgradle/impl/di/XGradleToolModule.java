@@ -36,6 +36,7 @@ import org.altlinux.xgradle.impl.redactors.RedactorsModule;
 import org.altlinux.xgradle.impl.registrars.RegistrarsModule;
 
 import org.altlinux.xgradle.impl.services.ServicesModule;
+import org.altlinux.xgradle.impl.resolvers.ResolversModule;
 
 /**
  * Google Guice dependency injection module for XGradle tool.
@@ -68,6 +69,8 @@ public final class XGradleToolModule extends AbstractModule {
         install(new InstallersModule());
 
         install(new ServicesModule());
+
+        install(new ResolversModule());
 
         install(new CachesModule());
 

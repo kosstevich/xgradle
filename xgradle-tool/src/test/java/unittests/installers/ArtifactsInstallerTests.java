@@ -23,10 +23,14 @@ import com.google.inject.util.Modules;
 import org.altlinux.xgradle.interfaces.collectors.ArtifactCollector;
 import org.altlinux.xgradle.interfaces.containers.ArtifactContainer;
 import org.altlinux.xgradle.interfaces.installers.ArtifactsInstaller;
+import org.altlinux.xgradle.interfaces.resolvers.PluginPomChainResolver;
+import org.altlinux.xgradle.interfaces.resolvers.PluginPomChainResult;
 import org.altlinux.xgradle.impl.cli.CliArgumentsContainer;
 import org.altlinux.xgradle.impl.config.ToolConfig;
 import org.altlinux.xgradle.impl.enums.ProcessingType;
 import org.altlinux.xgradle.impl.installers.InstallersModule;
+
+import org.apache.maven.model.Model;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -68,6 +73,9 @@ class ArtifactsInstallerTests {
     @Mock
     Logger logger;
 
+    @Mock
+    PluginPomChainResolver pomChainResolver;
+
     private ToolConfig toolConfig;
     private ArtifactsInstaller installer;
 
@@ -85,6 +93,7 @@ class ArtifactsInstallerTests {
                                 bind(CliArgumentsContainer.class).toInstance(cliArgs);
                                 bind(ToolConfig.class).toInstance(toolConfig);
                                 bind(Logger.class).toInstance(logger);
+                                bind(PluginPomChainResolver.class).toInstance(pomChainResolver);
                             }
                         })
         );
@@ -99,8 +108,8 @@ class ArtifactsInstallerTests {
     }
 
     @Test
-    @DisplayName("Copies POMs by artifactId and copies a JAR once based on main POM (packaging != pom)")
-    void copiesPomsAndJarOnce() throws Exception {
+    @DisplayName("Copies chain POMs by artifactId and copies a JAR once based on main POM (packaging != pom)")
+    void copiesChainPomsAndJarOnce() throws Exception {
         Path repo = tempDir.resolve("repo");
         Files.createDirectories(repo);
 
@@ -124,9 +133,24 @@ class ArtifactsInstallerTests {
                 .packaging("pom")
                 .writeTo(repo.resolve("meta.pom"));
 
+        Path parentPom = pom()
+                .groupId("g")
+                .artifactId("plugin-parent")
+                .version("1.0")
+                .packaging("pom")
+                .writeTo(repo.resolve("parent.pom"));
+
         HashMap<String, Path> artifacts = new HashMap<>();
         artifacts.put(mainPom.toString(), jar);
         artifacts.put(metaPom.toString(), jar);
+
+        HashMap<Path, Model> pomModels = new HashMap<>();
+        pomModels.put(mainPom, readModel(mainPom));
+        pomModels.put(metaPom, readModel(metaPom));
+        pomModels.put(parentPom, readModel(parentPom));
+
+        when(pomChainResolver.resolve(eq(repo.toString()), eq(Optional.empty()), eq(artifacts)))
+                .thenReturn(new PluginPomChainResult(pomModels, Set.of(mainPom, metaPom, parentPom)));
 
         when(artifactContainer.getArtifacts(eq(repo.toString()), eq(Optional.empty()), eq(ProcessingType.PLUGINS)))
                 .thenReturn(artifacts);
@@ -140,9 +164,11 @@ class ArtifactsInstallerTests {
         );
 
         verify(artifactContainer, times(1)).getArtifacts(repo.toString(), Optional.empty(), ProcessingType.PLUGINS);
+        verify(pomChainResolver, times(1)).resolve(repo.toString(), Optional.empty(), artifacts);
 
         assertTrue(Files.exists(outPoms.resolve("plugin-main.pom")));
         assertTrue(Files.exists(outPoms.resolve("plugin-meta.pom")));
+        assertTrue(Files.exists(outPoms.resolve("plugin-parent.pom")));
 
         assertTrue(Files.exists(outJars.resolve("plugin-main.jar")));
         assertArrayEquals("JAR".getBytes(StandardCharsets.UTF_8), Files.readAllBytes(outJars.resolve("plugin-main.jar")));
@@ -155,7 +181,7 @@ class ArtifactsInstallerTests {
     }
 
     @Test
-    @DisplayName("Deduplicates jar copy when multiple poms point to the same jar")
+    @DisplayName("Deduplicates jar copy when multiple poms point to the same jar, using chain resolution")
     void deduplicatesJarCopy() throws Exception {
         Path repo = tempDir.resolve("repo");
         Files.createDirectories(repo);
@@ -183,6 +209,13 @@ class ArtifactsInstallerTests {
         HashMap<String, Path> artifacts = new HashMap<>();
         artifacts.put(pom1.toString(), jar);
         artifacts.put(pom2.toString(), jar);
+
+        HashMap<Path, Model> pomModels = new HashMap<>();
+        pomModels.put(pom1, readModel(pom1));
+        pomModels.put(pom2, readModel(pom2));
+
+        when(pomChainResolver.resolve(eq(repo.toString()), eq(Optional.empty()), eq(artifacts)))
+                .thenReturn(new PluginPomChainResult(pomModels, Set.of(pom1, pom2)));
 
         when(artifactContainer.getArtifacts(eq(repo.toString()), eq(Optional.empty()), eq(ProcessingType.PLUGINS)))
                 .thenReturn(artifacts);
