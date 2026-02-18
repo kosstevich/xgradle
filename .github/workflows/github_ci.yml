@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  publishing:
+    name: Publishing (JDK ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    container:
+      image: registry.altlinux.org/sisyphus/alt:latest
+    strategy:
+      matrix:
+        java: [11, 17]
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            glibc-pthread \
+            git
+          if [ "${{ matrix.java }}" = "11" ]; then
+            apt-get install -y java-11-openjdk-devel
+          else
+            apt-get install -y java-17-openjdk-devel
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Publish to Maven Local (JDK ${{ matrix.java }})
+        run: |
+          if [ "${{ matrix.java }}" = "11" ]; then
+            ./gradlew publishToMavenLocal -Djava11
+          else
+            ./gradlew publishToMavenLocal
+          fi
+
+  tests:
+    name: Tests (JDK ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    container:
+      image: registry.altlinux.org/sisyphus/alt:latest
+    needs: publishing
+    strategy:
+      matrix:
+        java: [11, 17]
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y \
+            glibc-pthread \
+            git \
+            google-gson \
+            maven-lib \
+            shadow-gradle-plugin
+          if [ "${{ matrix.java }}" = "11" ]; then
+            apt-get install -y java-11-openjdk-devel
+          else
+            apt-get install -y java-17-openjdk-devel
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Check (JDK 11)
+        if: matrix.java == 11
+        run: |
+          ./gradlew build \
+            -Djava.library.dir="/usr/share/java" \
+            -Dmaven.poms.dir="/usr/share/maven-poms" \
+            -Djava11 \
+            --info
+
+      - name: Check (JDK 17)
+        if: matrix.java != 11
+        run: |
+          ./gradlew build \
+            -Djava.library.dir="/usr/share/java" \
+            -Dmaven.poms.dir="/usr/share/maven-poms" \
+            --info
