@@ -15,7 +15,12 @@
  */
 package org.altlinux.xgradle.impl.utils.ui;
 
+import org.altlinux.xgradle.impl.utils.config.XGradleConfig;
+import org.gradle.StartParameter;
+import org.gradle.api.invocation.Gradle;
+
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -33,7 +38,11 @@ public class LogoPrinter {
     private static final String ART_FILE = "logo.txt";
 
     public static boolean isLogoEnabled() {
-        return !"true".equals(System.getProperty("disable.logo"));
+        return isLogoEnabled(null);
+    }
+
+    public static boolean isLogoEnabled(Gradle gradle) {
+        return !"true".equals(XGradleConfig.getProperty("disable.logo")) && !isBuildSrcBuild(gradle);
     }
 
     public static void printCenteredBanner() {
@@ -92,5 +101,31 @@ public class LogoPrinter {
         } catch (Exception ignored) {
         }
         return 80;
+    }
+
+    private static boolean isBuildSrcBuild(Gradle gradle) {
+        if (gradle == null) {
+            return false;
+        }
+        StartParameter params = gradle.getStartParameter();
+        if (isBuildSrcDir(params.getProjectDir()) || isBuildSrcDir(params.getCurrentDir())) {
+            return true;
+        }
+        try {
+            return isBuildSrcDir(gradle.getRootProject().getProjectDir());
+        } catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private static boolean isBuildSrcDir(File dir) {
+        if (dir == null) {
+            return false;
+        }
+        if ("buildSrc".equals(dir.getName())) {
+            return true;
+        }
+        String normalized = dir.getPath().replace('\\', '/');
+        return normalized.endsWith("/buildSrc") || normalized.contains("/buildSrc/");
     }
 }
