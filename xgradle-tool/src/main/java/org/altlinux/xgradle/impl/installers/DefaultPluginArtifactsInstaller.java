@@ -19,8 +19,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 import org.altlinux.xgradle.impl.enums.ProcessingType;
-import org.altlinux.xgradle.api.containers.ArtifactContainer;
-import org.altlinux.xgradle.api.installers.ArtifactsInstaller;
+import org.altlinux.xgradle.interfaces.containers.ArtifactContainer;
+import org.altlinux.xgradle.interfaces.installers.ArtifactsInstaller;
+import org.altlinux.xgradle.interfaces.resolvers.PluginPomChainResolver;
+import org.altlinux.xgradle.interfaces.resolvers.PluginPomChainResult;
 
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -28,7 +30,6 @@ import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -45,36 +46,28 @@ import java.util.List;
 
 /**
  * Default implementation of ArtifactsInstaller for Gradle plugin artifacts.
- * Handles installation of plugin POM and JAR files to target directories with proper naming.
+ * Implements {@link ArtifactsInstaller}.
  *
- * @author Ivan Khanas
+ * @author Ivan Khanas <xeno@altlinux.org>
  */
 @Singleton
-public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
-    private final Logger logger = LoggerFactory.getLogger("XGradleLogger");
-    private final ArtifactContainer artifactContainer;
+final class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
 
-    /**
-     * Constructs a new DefaultPluginArtifactsInstaller with required dependencies.
-     *
-     * @param artifactContainer container for artifact management
-     */
+    private final ArtifactContainer artifactContainer;
+    private final PluginPomChainResolver pomChainResolver;
+    private final Logger logger;
+
     @Inject
-    public DefaultPluginArtifactsInstaller(ArtifactContainer artifactContainer) {
+    DefaultPluginArtifactsInstaller(
+            ArtifactContainer artifactContainer,
+            PluginPomChainResolver pomChainResolver,
+            Logger logger
+    ) {
         this.artifactContainer = artifactContainer;
+        this.pomChainResolver = pomChainResolver;
+        this.logger = logger;
     }
 
-    /**
-     * Installs plugin artifacts to the specified target directories.
-     * Copies POM and JAR files with standardized naming based on artifactId.
-     *
-     * @param searchingDirectory the directory to search for artifacts
-     * @param artifactName optional list of artifact names to filter by
-     * @param pomInstallationDirectory target directory for POM files
-     * @param jarInstallationDirectory target directory for JAR files
-     * @param processingType the type of processing (should be PLUGINS)
-     * @throws RuntimeException if target directories cannot be created
-     */
     @Override
     public void install(
             String searchingDirectory,
@@ -111,20 +104,14 @@ public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
             throw new RuntimeException("Failed to create target POM directory", e);
         }
 
-        Map<Path, Model> pomModels = new HashMap<>();
+        PluginPomChainResult pomChain = pomChainResolver.resolve(
+                searchingDirectory,
+                artifactName,
+                artifactsMap
+        );
+        Map<Path, Model> pomModels = pomChain.getPomModels();
 
         Set<Path> processedJars = new HashSet<>();
-
-        for (Map.Entry<String, Path> entry : artifactsMap.entrySet()) {
-            Path pomPath = Paths.get(entry.getKey());
-
-            try {
-                Model model = readPomModel(pomPath);
-                pomModels.put(pomPath, model);
-            } catch (IOException | XmlPullParserException e) {
-                logger.error("Failed to read POM file: {}", pomPath, e);
-            }
-        }
 
         Map<Path, Path> mainPomForJar = new HashMap<>();
 
@@ -138,10 +125,10 @@ public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
             }
         }
 
-        for (Map.Entry<String, Path> entry : artifactsMap.entrySet()) {
-            Path pomPath = Paths.get(entry.getKey());
-            Model model = pomModels.get(pomPath);
+        Set<Path> pomPathsToCopy = pomChain.getPomPaths();
 
+        for (Path pomPath : pomPathsToCopy) {
+            Model model = pomModels.get(pomPath);
             if (model != null && model.getArtifactId() != null) {
                 String newPomName = model.getArtifactId() + ".pom";
                 Path targetPom = targetPomDir.resolve(newPomName);
@@ -197,20 +184,61 @@ public class DefaultPluginArtifactsInstaller implements ArtifactsInstaller {
                 }
             }
         }
+
+        for (Path pomPath : pomPathsToCopy) {
+            Model model = pomModels.get(pomPath);
+            if (model == null || model.getArtifactId() == null) {
+                continue;
+            }
+
+            Path jarPath = resolveJarPath(pomPath, model);
+            if (jarPath == null || processedJars.contains(jarPath)) {
+                continue;
+            }
+
+            processedJars.add(jarPath);
+            Path targetJar = targetJarDir.resolve(model.getArtifactId() + ".jar");
+
+            try {
+                Files.copy(jarPath, targetJar, StandardCopyOption.REPLACE_EXISTING);
+                logger.info("Copied JAR: {} -> {} (based on POM: {})", jarPath, targetJar, pomPath);
+            } catch (IOException e) {
+                logger.error("Failed to copy JAR: {}", jarPath, e);
+            }
+        }
     }
 
-    /**
-     * Reads and parses a POM file into a Maven model.
-     *
-     * @param pomPath path to the POM file
-     * @return parsed Maven model
-     * @throws IOException if an I/O error occurs
-     * @throws XmlPullParserException if the POM file cannot be parsed
-     */
     private Model readPomModel(Path pomPath) throws IOException, XmlPullParserException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
         try (FileInputStream fis = new FileInputStream(pomPath.toFile())) {
             return reader.read(fis);
         }
+    }
+
+    private Path resolveJarPath(Path pomPath, Model model) {
+        String artifactId = model.getArtifactId();
+        String version = model.getVersion();
+        if (version == null && model.getParent() != null) {
+            version = model.getParent().getVersion();
+        }
+
+        Path dir = pomPath.getParent();
+        if (artifactId == null || dir == null) {
+            return null;
+        }
+
+        if (version != null) {
+            Path versioned = dir.resolve(artifactId + "-" + version + ".jar");
+            if (Files.exists(versioned)) {
+                return versioned;
+            }
+        }
+
+        Path unversioned = dir.resolve(artifactId + ".jar");
+        if (Files.exists(unversioned)) {
+            return unversioned;
+        }
+
+        return null;
     }
 }
