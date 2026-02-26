@@ -15,6 +15,7 @@ failureaccess = "1.0.1"
 jakarta-inject = "1.0.5"
 asm = "9.4"
 aopalliance = "1.0"
+gson = "2.13.2"
 
 [libraries]
 maven-model = { module = "org.apache.maven:maven-model", version.ref = "maven-model" }
@@ -43,6 +44,8 @@ failureaccess = { module = "com.google.guava:failureaccess", version.ref = "fail
 jakarta-inject-api = { module = "jakarta.inject:jakarta.inject-api", version.ref = "jakarta-inject" }
 aopalliance = { module = "aopalliance:aopalliance", version.ref = "aopalliance" }
 asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 
 [bundles]
 maven-tooling = ["maven-model", "maven-model-builder", "maven-artifact"]
