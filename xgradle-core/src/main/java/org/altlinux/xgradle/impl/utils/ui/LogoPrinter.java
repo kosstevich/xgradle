@@ -36,6 +36,7 @@ import java.util.List;
 public class LogoPrinter {
 
     private static final String ART_FILE = "logo.txt";
+    private static final String VERSION_TOKEN = "@version@";
 
     public static boolean isLogoEnabled() {
         return isLogoEnabled(null);
@@ -127,5 +128,9 @@ public class LogoPrinter {
         }
         String normalized = dir.getPath().replace('\\', '/');
         return normalized.endsWith("/buildSrc") || normalized.contains("/buildSrc/");
+    }
+
+    public static String getVersionToken() {
+        return VERSION_TOKEN;
     }
 }
