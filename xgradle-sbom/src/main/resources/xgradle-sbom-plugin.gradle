@@ -1,0 +1,13 @@
+initscript {
+    repositories {
+        flatDir {
+            dirs(gradle.gradleHomeDir.getAbsolutePath() + "/xgradle")
+        }
+    }
+    dependencies {
+        classpath name: "xgradle-core"
+        classpath name: "xgradle-sbom"
+    }
+}
+
+gradle.apply plugin: org.altlinux.xgradle.sbom.plugin.XGradleSbomPlugin
