@@ -139,7 +139,7 @@ jobs:
             min-coverage-overall: 80
             min-coverage-changed-files: 80
             title: Code Coverage
-            update-comment: true
+#            update-comment: true
             debug-mode: true
 
       - name: Fail PR if change coverage is less than 80%
