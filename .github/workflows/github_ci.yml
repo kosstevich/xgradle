@@ -120,12 +120,6 @@ jobs:
             shadow-gradle-plugin \
             java-17-openjdk-devel
 
-      - name: Cancel previous runs
-        if: github.event_name == 'pull_request' && github.event.action != 'opened'
-        uses: styfle/cancel-workflow-action@0.12.0
-        with:
-          access_token: ${{ secrets.GITHUB_TOKEN }}
-
       - uses: actions/checkout@v4
 
       - name: Run jacoco check
@@ -146,6 +140,7 @@ jobs:
             min-coverage-changed-files: 80
             title: Code Coverage
             update-comment: true
+            debug-mode: true
 
       - name: Fail PR if change coverage is less than 80%
         if: ${{ steps.jacoco.outputs.coverage-changed-files < 80.0 }}
