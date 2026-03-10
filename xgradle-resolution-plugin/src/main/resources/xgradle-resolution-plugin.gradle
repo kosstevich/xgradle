@@ -5,7 +5,7 @@ initscript{
         }
     }
     dependencies {
-        classpath name: "xgradle-core"
+        classpath name: "xgradle-resolution-plugin"
     }
 }
 

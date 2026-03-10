@@ -1,18 +1,18 @@
-# xgradle-core
+# xgradle-resolution-plugin
 
-**xgradle-core** is the Gradle-side component of **xgradle** — an **offline-first toolkit** for Gradle builds.
+**xgradle-resolution-plugin** is the Gradle-side component of **xgradle** — an **offline-first toolkit** for Gradle builds.
 
 It is implemented as a **Gradle plugin applied to the Gradle instance** (not to a single project), so it must be
 loaded early via a Gradle **init script**. The module is distributed as:
 
-- **`xgradle-core.jar`** — the plugin JAR
-- **`xgradle-plugin.gradle`** — init script that adds the JAR to the init classpath and applies the plugin
+- **`xgradle-resolution-plugin.jar`** — the plugin JAR
+- **`xgradle-resolution-plugin.gradle`** — init script that adds the JAR to the init classpath and applies the plugin
 
 ---
 
 ## Where it fits in RPM packaging
 
-In RPM (and similar distro packaging) workflows **xgradle-core** is typically used in the **`%build`** section.
+In RPM (and similar distro packaging) workflows **xgradle-resolution-plugin** is typically used in the **`%build`** section.
 
 It makes the *build itself* reproducible and offline-friendly by teaching Gradle to consume the **system/local artifact
 set** (prepared by packaging) rather than downloading from the network.
@@ -33,7 +33,7 @@ set** (prepared by packaging) rather than downloading from the network.
   allowing Gradle plugins to be resolved from local/system artifacts.
 
 ### 3) Optional SBOM generation
-- If `generate.sbom` is set to `spdx` or `cyclonedx`, xgradle-core generates an SBOM report
+- If `generate.sbom` is set to `spdx` or `cyclonedx`, xgradle-resolution-plugin generates an SBOM report
   from resolved build artifacts.
 - Report path:
   - `build/reports/xgradle/sbom-spdx.json`
@@ -43,7 +43,7 @@ set** (prepared by packaging) rather than downloading from the network.
 
 ## Configuration
 
-xgradle-core is configured via **system properties** or the user config file
+xgradle-resolution-plugin is configured via **system properties** or the user config file
 `~/.xgradle/xgradle.config` (Java properties format). System properties set with
 `-D` take precedence.
 

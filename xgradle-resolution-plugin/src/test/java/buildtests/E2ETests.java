@@ -48,7 +48,7 @@ public class E2ETests {
 
     @BeforeEach
     public void preparePluginJar() {
-        pluginJar = new File("build/dist/xgradle-core.jar");
+        pluginJar = new File("build/dist/xgradle-resolution-plugin.jar");
         if (!pluginJar.exists()) {
             throw new IllegalStateException("Could not find plugin jar: " + pluginJar.getAbsolutePath());
         }
@@ -97,9 +97,9 @@ public class E2ETests {
         File pluginTarget = new File(pluginsDir, pluginJar.getName());
         Files.copy(pluginJar.toPath(), pluginTarget.toPath(), StandardCopyOption.REPLACE_EXISTING);
 
-        File initScript = new File(tempDir, "xgradle-plugin.gradle");
+        File initScript = new File(tempDir, "xgradle-resolution-plugin.gradle");
 
-        String template = loadResource("xgradle-plugin-test.gradle");
+        String template = loadResource("xgradle-resolution-plugin-test.gradle");
 
         String initScriptContent = template
                 .replace("{{PLUGINS_DIR}}", pluginsDir.getAbsolutePath()

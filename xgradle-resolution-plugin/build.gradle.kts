@@ -21,6 +21,8 @@ plugins {
     id("org.altlinux.xgradle-publishing-conventions")
 }
 
+val initScriptName = "${project.name}.gradle"
+
 dependencies {
     compileOnly(gradleApi())
     implementation(project(":xgradle-sbom-generator"))
@@ -61,7 +63,7 @@ tasks.named<Copy>("processResources") {
 
 tasks.register<Copy>("copyInitScript") {
     dependsOn("processResources")
-    from("src/main/resources/${rootProject.name}-plugin.gradle")
+    from("src/main/resources/$initScriptName")
     into(layout.buildDirectory.dir("dist"))
 }
 
@@ -145,11 +147,14 @@ tasks.test {
 
 tasks.named("clean") {
     doLast {
-        val targetFile = layout.buildDirectory
-            .file("${rootProject.name}-plugin.gradle").get().asFile
-
-        if (targetFile.exists()) {
-            targetFile.delete()
+        listOf(
+            initScriptName,
+            "${rootProject.name}-plugin.gradle"
+        ).forEach { scriptName ->
+            val targetFile = layout.buildDirectory.file(scriptName).get().asFile
+            if (targetFile.exists()) {
+                targetFile.delete()
+            }
         }
     }
 }

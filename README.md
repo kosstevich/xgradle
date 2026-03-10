@@ -21,16 +21,16 @@ The project is split into standalone components that work together:
 
 XMvn: https://fedora-java.github.io/xmvn
 
-- **[xgradle-core](xgradle-core/README.md) (Gradle plugin / init script)** — configures Gradle to resolve:
+- **[xgradle-resolution-plugin](xgradle-resolution-plugin/README.md) (Gradle plugin / init script)** — configures Gradle to resolve:
     - Project dependencies from local system artifact directories
     - Gradle plugins from local directories via pluginManagement repositories
 
-- **[xgradle-tool](xgradle-tool/README.md) (standalone CLI)** — prepares and maintains the local artifact set used by Gradle:
+- **[xgradle-cli](xgradle-cli/README.md) (standalone CLI)** — prepares and maintains the local artifact set used by Gradle:
     - Registers local artifacts / BOMs for consistent versioning
     - Installs/exports JARs, POMs and related metadata into target directories
     - Optionally patches/redacts POM files to fit offline/system packaging needs
 
-- **xgradle-sbom-generator (library module)** — generates SBOM reports from resolved artifacts in:
+- **[xgradle-sbom-generator](xgradle-sbom-generator/README.md) (extension module)** — generates SBOM reports from resolved artifacts in:
     - SPDX JSON
     - CycloneDX JSON
 
@@ -102,25 +102,25 @@ Optional: generate SBOM during build:
 xgradle is typically installed into system directories used by Linux distributions
 (Gradle init scripts, Java JARs, Maven POM metadata).
 
-**1.Install the Gradle plugin (xgradle-core) and init script**
+**1.Install the Gradle plugin (xgradle-resolution-plugin) and init script**
 ```
-install -Dm 644 xgradle-core/build/dist/xgradle-core.jar \
+install -Dm 644 xgradle-resolution-plugin/build/dist/xgradle-resolution-plugin.jar \
   -t /path/to/gradle/xgradle
 
-install -Dm 644 xgradle-core/build/dist/xgradle-plugin.gradle \
+install -Dm 644 xgradle-resolution-plugin/build/dist/xgradle-resolution-plugin.gradle \
   -t /path/to/gradle/init.d
 ```
 
-**2.Install the CLI tool (xgradle-tool)**
+**2.Install the CLI tool (xgradle-cli)**
 ```
-install -Dm 644 xgradle-tool/build/dist/xgradle-tool.jar \
+install -Dm 644 xgradle-cli/build/dist/xgradle-cli.jar \
   -t /usr/share/xgradle
 
-install -Dm 755 xgradle-tool/build/dist/xgradle-tool \
+install -Dm 755 xgradle-cli/build/dist/xgradle-cli \
   -t /usr/share/xgradle
 
-ln -s /usr/share/xgradle/xgradle-tool \
-  /usr/bin/xgradle-tool
+ln -s /usr/share/xgradle/xgradle-cli \
+  /usr/bin/xgradle-cli
 ```
 
 ---

@@ -10,7 +10,7 @@ resolved Gradle dependencies in offline/system-artifact workflows.
 
 ## Activation
 
-The module is consumed by `xgradle-core` and is activated by property:
+The module is consumed by `xgradle-resolution-plugin` and is activated by property:
 
 ```bash
 -Dgenerate.sbom=spdx

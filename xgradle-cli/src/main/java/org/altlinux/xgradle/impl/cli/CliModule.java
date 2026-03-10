@@ -52,7 +52,7 @@ public final class CliModule extends AbstractModule {
     JCommander jCommander(CliArgumentsContainer args) {
         JCommander jc = JCommander.newBuilder()
                 .addObject(args)
-                .programName("xgradle-tool")
+                .programName("xgradle-cli")
                 .console(new DefaultConsole())
                 .build();
 

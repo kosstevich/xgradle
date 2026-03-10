@@ -70,8 +70,8 @@ xgradlePublishingConventions {
 }
 
 tasks.test {
-    dependsOn(":xgradle-core:copyPublicationsToDist")
-    mustRunAfter(":xgradle-core:copyPublicationsToDist")
+    dependsOn(":xgradle-resolution-plugin:copyPublicationsToDist")
+    mustRunAfter(":xgradle-resolution-plugin:copyPublicationsToDist")
     useJUnitPlatform()
 
     testLogging {

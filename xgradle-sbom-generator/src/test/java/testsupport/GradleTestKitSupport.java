@@ -38,8 +38,8 @@ import java.util.stream.Stream;
 public final class GradleTestKitSupport {
 
     private static final String TESTLIBS_DIR_NAME = "testlibs";
-    private static final String INIT_SCRIPT_NAME = "xgradle-plugin.gradle";
-    private static final String INIT_SCRIPT_TEMPLATE_RESOURCE = "xgradle-plugin-test.gradle";
+    private static final String INIT_SCRIPT_NAME = "xgradle-resolution-plugin.gradle";
+    private static final String INIT_SCRIPT_TEMPLATE_RESOURCE = "xgradle-resolution-plugin-test.gradle";
 
     private GradleTestKitSupport() {
     }
@@ -178,20 +178,20 @@ public final class GradleTestKitSupport {
 
     private static File findPluginJar() {
         File direct = findExistingFile(
-                "../xgradle-core/build/dist/xgradle-core.jar",
-                "xgradle-core/build/dist/xgradle-core.jar",
-                "../xgradle-core/build/libs/xgradle-core.jar",
-                "xgradle-core/build/libs/xgradle-core.jar"
+                "../xgradle-resolution-plugin/build/dist/xgradle-resolution-plugin.jar",
+                "xgradle-resolution-plugin/build/dist/xgradle-resolution-plugin.jar",
+                "../xgradle-resolution-plugin/build/libs/xgradle-resolution-plugin.jar",
+                "xgradle-resolution-plugin/build/libs/xgradle-resolution-plugin.jar"
         );
         if (direct != null) {
             return direct;
         }
 
-        File versioned = findVersionedJar("../xgradle-core/build/libs", "xgradle-core-");
+        File versioned = findVersionedJar("../xgradle-resolution-plugin/build/libs", "xgradle-resolution-plugin-");
         if (versioned != null) {
             return versioned;
         }
-        return findVersionedJar("xgradle-core/build/libs", "xgradle-core-");
+        return findVersionedJar("xgradle-resolution-plugin/build/libs", "xgradle-resolution-plugin-");
     }
 
     private static File findVersionedJar(
