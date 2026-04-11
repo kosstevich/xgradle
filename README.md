@@ -1,5 +1,5 @@
 <div align="center">
-  <img alt="xgradle logo" src="gradle/xgradle-logo.png" width="400">
+  <img alt="xgradle logo" src="gradle/xgradle-logo.png" width="500">
 </div>
 
 ### 🤔 What`s xgradle?
