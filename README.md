@@ -1,11 +1,6 @@
-```
-                             _ _
-    __  ____ _ _ __ __ _  __| | | ___
-    \ \/ / _` | '__/ _` |/ _` | |/ _ \
-     >  < (_| | | | (_| | (_| | |  __/
-    /_/\_\__, |_|  \__,_|\__,_|_|\___| v 0.2.0
-         |___/
-```
+<div align="center">
+  <img alt="xgradle logo" src="gradle/xgradle-logo.png" width="400">
+</div>
 
 ### 🤔 What`s xgradle?
 

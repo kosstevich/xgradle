@@ -106,4 +106,173 @@ class ArtifactVerifierTests {
             }
         }
     }
+
+    @Test
+    @DisplayName("Returns false for null coordinate")
+    void returnsFalseForNullCoord() {
+        Injector injector = Guice.createInjector(
+                Modules.override(new ServicesModule()).with(new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(VersionScanner.class).toInstance(versionScanner);
+                        bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                    }
+                })
+        );
+        ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+
+        assertFalse(verifier.verifyArtifactExists(null));
+    }
+
+    @Test
+    @DisplayName("Returns false for invalid coordinate missing version")
+    void returnsFalseForInvalidCoord() {
+        Injector injector = Guice.createInjector(
+                Modules.override(new ServicesModule()).with(new AbstractModule() {
+                    @Override
+                    protected void configure() {
+                        bind(VersionScanner.class).toInstance(versionScanner);
+                        bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                    }
+                })
+        );
+        ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+        MavenCoordinate coord = MavenCoordinate.builder()
+                .groupId("g")
+                .artifactId("a")
+                .build();
+
+        assertFalse(verifier.verifyArtifactExists(coord));
+    }
+
+    @Test
+    @DisplayName("Returns false when no base paths are configured")
+    void returnsFalseWhenBasePathsMissing() {
+        String prev = System.getProperty("java.library.dir");
+        System.clearProperty("java.library.dir");
+        try {
+            Injector injector = Guice.createInjector(
+                    Modules.override(new ServicesModule()).with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(VersionScanner.class).toInstance(versionScanner);
+                            bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                        }
+                    })
+            );
+            ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+            MavenCoordinate coord = MavenCoordinate.builder()
+                    .groupId("g")
+                    .artifactId("lib")
+                    .version("1.0")
+                    .build();
+
+            assertFalse(verifier.verifyArtifactExists(coord));
+        } finally {
+            if (prev != null) {
+                System.setProperty("java.library.dir", prev);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Returns false when jar is absent from system directory")
+    void returnsFalseWhenJarAbsent(@TempDir Path tempDir) {
+        String prev = System.getProperty("java.library.dir");
+        System.setProperty("java.library.dir", tempDir.toString());
+        try {
+            Injector injector = Guice.createInjector(
+                    Modules.override(new ServicesModule()).with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(VersionScanner.class).toInstance(versionScanner);
+                            bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                        }
+                    })
+            );
+            ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+            MavenCoordinate coord = MavenCoordinate.builder()
+                    .groupId("g")
+                    .artifactId("notexist")
+                    .version("1.0")
+                    .build();
+
+            assertFalse(verifier.verifyArtifactExists(coord));
+        } finally {
+            if (prev != null) {
+                System.setProperty("java.library.dir", prev);
+            } else {
+                System.clearProperty("java.library.dir");
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Finds jar by exact base name without version suffix")
+    void findsJarByExactBaseName(@TempDir Path tempDir) throws Exception {
+        String prev = System.getProperty("java.library.dir");
+        System.setProperty("java.library.dir", tempDir.toString());
+        try {
+            Files.writeString(tempDir.resolve("mylib.jar"), "jar");
+
+            Injector injector = Guice.createInjector(
+                    Modules.override(new ServicesModule()).with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(VersionScanner.class).toInstance(versionScanner);
+                            bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                        }
+                    })
+            );
+            ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+            MavenCoordinate coord = MavenCoordinate.builder()
+                    .groupId("g")
+                    .artifactId("mylib")
+                    .version("1.0")
+                    .build();
+
+            assertTrue(verifier.verifyArtifactExists(coord));
+        } finally {
+            if (prev != null) {
+                System.setProperty("java.library.dir", prev);
+            } else {
+                System.clearProperty("java.library.dir");
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Finds jar recursively in subdirectory")
+    void findsJarRecursivelyInSubdirectory(@TempDir Path tempDir) throws Exception {
+        String prev = System.getProperty("java.library.dir");
+        System.setProperty("java.library.dir", tempDir.toString());
+        try {
+            Path subDir = Files.createDirectory(tempDir.resolve("sub"));
+            Files.writeString(subDir.resolve("widget-2.jar"), "jar");
+
+            Injector injector = Guice.createInjector(
+                    Modules.override(new ServicesModule()).with(new AbstractModule() {
+                        @Override
+                        protected void configure() {
+                            bind(VersionScanner.class).toInstance(versionScanner);
+                            bind(PomMetadataReader.class).toInstance(pomMetadataReader);
+                        }
+                    })
+            );
+            ArtifactVerifier verifier = injector.getInstance(ArtifactVerifier.class);
+            MavenCoordinate coord = MavenCoordinate.builder()
+                    .groupId("g")
+                    .artifactId("widget")
+                    .version("2.0")
+                    .build();
+
+            assertTrue(verifier.verifyArtifactExists(coord));
+        } finally {
+            if (prev != null) {
+                System.setProperty("java.library.dir", prev);
+            } else {
+                System.clearProperty("java.library.dir");
+            }
+        }
+    }
 }
